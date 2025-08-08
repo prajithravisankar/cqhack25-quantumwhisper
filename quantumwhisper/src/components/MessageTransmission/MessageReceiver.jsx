@@ -47,27 +47,44 @@ const MessageReceiver = () => {
   const handlePasteMessage = async () => {
     try {
       const text = await navigator.clipboard.readText();
+      console.log('Pasted message text:', text);
       await processReceivedData(text.trim());
     } catch (e) {
       console.error('Failed to paste message:', e);
+      const errorMessage = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleTimeString(),
+        content: '[Paste failed]',
+        status: 'error',
+        error: e.message
+      };
+      setMessages(prev => [errorMessage, ...prev]);
     }
   };
 
   const processReceivedData = async (data) => {
     try {
       setDecrypting(true);
+      console.log('Processing received data:', data);
       
       // Try to parse as message payload
       let messageData;
       try {
         const parsed = JSON.parse(data);
-        if (parsed.t === 'msg' && parsed.data) {
+        console.log('Parsed JSON:', parsed);
+        
+        if (parsed.type === 'encrypted_message' && parsed.data) {
+          console.log('Recognized as encrypted message payload');
+          messageData = parsed.data;
+        } else if (parsed.t === 'msg' && parsed.data) {
+          console.log('Recognized as legacy message payload');
           messageData = parsed.data;
         } else {
+          console.log('JSON does not match message format, trying direct decryption');
           throw new Error('Not a message payload');
         }
       } catch {
-        // Try direct decryption
+        console.log('Not valid JSON, trying direct decryption');
         messageData = data;
       }
 
@@ -75,7 +92,9 @@ const MessageReceiver = () => {
         throw new Error('No valid quantum key for decryption');
       }
 
+      console.log('Attempting decryption with message data:', messageData);
       const result = await decrypt(messageData);
+      console.log('Decryption result:', result);
       
       if (result.ok) {
         const newMessage = {
@@ -86,6 +105,7 @@ const MessageReceiver = () => {
         };
         setMessages(prev => [newMessage, ...prev]);
         setCurrentMessage(result.plaintext);
+        console.log('Message decrypted successfully:', result.plaintext);
       } else {
         const errorMessage = {
           id: Date.now(),
@@ -95,8 +115,10 @@ const MessageReceiver = () => {
           error: result.error?.message || 'Unknown error'
         };
         setMessages(prev => [errorMessage, ...prev]);
+        console.error('Decryption failed:', result.error);
       }
     } catch (e) {
+      console.error('Processing failed:', e);
       const errorMessage = {
         id: Date.now(),
         timestamp: new Date().toLocaleTimeString(),

@@ -25,11 +25,13 @@ const MessageSender = () => {
   const [encryptedPackage, setEncryptedPackage] = useState(null);
   const [transmitting, setTransmitting] = useState(false);
   const [transmitted, setTransmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const messageLength = message.length;
   const isMessageValid = message.trim().length > 0 && messageLength <= MAX_MESSAGE_LENGTH;
   const canEncrypt = isKeyValid && isMessageValid && encStatus !== 'encrypting';
   const canTransmit = encryptedPackage && !transmitting;
+  const canCopy = encryptedPackage;
 
   const handleEncrypt = async () => {
     if (!canEncrypt) return;
@@ -63,10 +65,34 @@ const MessageSender = () => {
     setTransmitted(result.ok);
   };
 
+  const handleCopyMessage = async () => {
+    if (!encryptedPackage) return;
+
+    try {
+      // Create a message payload similar to quantum key format
+      const messagePayload = {
+        version: 1,
+        type: 'encrypted_message',
+        timestamp: Date.now(),
+        data: encryptedPackage,
+      };
+
+      await navigator.clipboard.writeText(JSON.stringify(messagePayload));
+      setCopied(true);
+      console.log('Encrypted message copied to clipboard');
+      
+      // Reset copy status after 3 seconds
+      setTimeout(() => setCopied(false), 3000);
+    } catch (e) {
+      console.error('Failed to copy message:', e);
+    }
+  };
+
   const handleReset = () => {
     setMessage('');
     setEncryptedPackage(null);
     setTransmitted(false);
+    setCopied(false);
   };
 
   const getKeyStatus = () => {
@@ -152,7 +178,15 @@ const MessageSender = () => {
           >
             Transmit via Audio
           </ControlButton>
+          <ControlButton 
+            variant="secondary"
+            onClick={handleCopyMessage} 
+            disabled={!canCopy}
+          >
+            Copy Message
+          </ControlButton>
           {transmitted && <span className="text-xs text-emerald-700">Message transmitted</span>}
+          {copied && <span className="text-xs text-blue-700">Message copied</span>}
         </div>
         <StatusIndicator 
           status={audioStatus} 
