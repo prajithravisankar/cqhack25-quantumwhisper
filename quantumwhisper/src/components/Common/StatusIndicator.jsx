@@ -4,40 +4,6 @@ function clsx(...arr) {
   return arr.filter(Boolean).join(' ');
 }
 
-const STATUS_STYLES = {
-  idle: { color: 'bg-gray-400', text: 'text-gray-700', ring: 'ring-gray-300' },
-  generating: { color: 'bg-blue-500', text: 'text-blue-800', ring: 'ring-blue-300' },
-  generated: { color: 'bg-green-500', text: 'text-green-800', ring: 'ring-green-300' },
-  receiving: { color: 'bg-blue-500', text: 'text-blue-800', ring: 'ring-blue-300' },
-  received: { color: 'bg-green-500', text: 'text-green-800', ring: 'ring-green-300' },
-  matched: { color: 'bg-emerald-500', text: 'text-emerald-800', ring: 'ring-emerald-300' },
-  mismatch: { color: 'bg-amber-500', text: 'text-amber-800', ring: 'ring-amber-300' },
-  playing: { color: 'bg-indigo-500', text: 'text-indigo-800', ring: 'ring-indigo-300' },
-  encoding: { color: 'bg-purple-500', text: 'text-purple-800', ring: 'ring-purple-300' },
-  started: { color: 'bg-indigo-500', text: 'text-indigo-800', ring: 'ring-indigo-300' },
-  finished: { color: 'bg-green-500', text: 'text-green-800', ring: 'ring-green-300' },
-  success: { color: 'bg-green-500', text: 'text-green-800', ring: 'ring-green-300' },
-  retry: { color: 'bg-yellow-500', text: 'text-yellow-900', ring: 'ring-yellow-300' },
-  listening: { color: 'bg-sky-500', text: 'text-sky-900', ring: 'ring-sky-300' },
-  'request-permission': { color: 'bg-sky-400', text: 'text-sky-900', ring: 'ring-sky-200' },
-  'permission-denied': { color: 'bg-red-500', text: 'text-red-900', ring: 'ring-red-300' },
-  timeout: { color: 'bg-orange-500', text: 'text-orange-900', ring: 'ring-orange-300' },
-  decoded: { color: 'bg-fuchsia-500', text: 'text-fuchsia-900', ring: 'ring-fuchsia-300' },
-  stopped: { color: 'bg-gray-500', text: 'text-gray-800', ring: 'ring-gray-300' },
-  error: { color: 'bg-red-600', text: 'text-red-900', ring: 'ring-red-300' },
-};
-
-const Dot = ({ status = 'idle' }) => {
-  const st = STATUS_STYLES[status] || STATUS_STYLES.idle;
-  return <span className={clsx('inline-block h-3 w-3 rounded-full', st.color)} aria-hidden="true" />;
-};
-
-const ProgressBar = ({ value = 0 }) => (
-  <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-    <div className="h-full bg-blue-600 transition-all" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
-  </div>
-);
-
 const StatusIndicator = ({
   status = 'idle',
   label = 'Status',
@@ -45,39 +11,94 @@ const StatusIndicator = ({
   progress = null,
   className = '',
 }) => {
-  const st = STATUS_STYLES[status] || STATUS_STYLES.idle;
+  // Map status to modern status classes
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'idle':
+      case 'stopped':
+        return 'modern-status-idle';
+      case 'generating':
+      case 'receiving':
+      case 'listening':
+      case 'playing':
+      case 'encoding':
+      case 'started':
+        return 'modern-status-active';
+      case 'generated':
+      case 'received':
+      case 'finished':
+      case 'success':
+      case 'decoded':
+      case 'matched':
+        return 'modern-status-success';
+      case 'error':
+      case 'permission-denied':
+        return 'modern-status-error';
+      case 'retry':
+      case 'timeout':
+      case 'mismatch':
+      case 'request-permission':
+        return 'modern-status-warning';
+      default:
+        return 'modern-status-idle';
+    }
+  };
 
-  // Derive a simple progress number if available
+  // Derive progress value
   let progressValue = null;
-  if (typeof progress === 'number') progressValue = progress;
-  else if (progress && typeof progress?.rms === 'number') progressValue = Math.min(100, Math.round(progress.rms * 100));
+  if (typeof progress === 'number') {
+    progressValue = progress;
+  } else if (progress && typeof progress?.rms === 'number') {
+    progressValue = Math.min(100, Math.round(progress.rms * 100));
+  }
+
+  const isActive = ['generating', 'receiving', 'listening', 'playing', 'encoding', 'started'].includes(status);
 
   return (
-    <div className={clsx('rounded-md border p-3 text-sm', st.ring, 'ring-1', className)}>
-      <div className="flex items-center gap-2">
-        <Dot status={status} />
-        <div className={clsx('font-medium', st.text)}>{label}: {status}</div>
+    <div className={clsx('modern-card p-4', className)}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={clsx(
+            'modern-status-dot',
+            isActive && 'modern-status-dot-pulse'
+          )} />
+          <span className="text-sm font-medium">{label}</span>
+        </div>
+        <div className={clsx('modern-status', getStatusClass(status))}>
+          {status}
+        </div>
       </div>
 
       {progressValue != null && (
-        <div className="mt-2">
-          <ProgressBar value={progressValue} />
+        <div className="mt-3">
+          <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <span>Progress</span>
+            <span>{progressValue}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+              style={{ width: `${Math.max(0, Math.min(100, progressValue))}%` }}
+            />
+          </div>
         </div>
       )}
 
-      {progress && typeof progress === 'object' && (
-        <div className="mt-2 text-xs text-gray-600">
-          {Object.entries(progress).map(([k, v]) => (
-            <div key={k} className="flex justify-between">
-              <span className="uppercase tracking-wide">{k}</span>
-              <span className="font-mono">{String(v)}</span>
+      {progress && typeof progress === 'object' && progressValue == null && (
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          {Object.entries(progress).map(([key, value]) => (
+            <div key={key} className="flex justify-between p-2 bg-gray-50 rounded">
+              <span className="text-gray-500 uppercase tracking-wide">{key}</span>
+              <span className="font-mono text-gray-700">{String(value)}</span>
             </div>
           ))}
         </div>
       )}
 
       {error && (
-        <div className="mt-2 rounded bg-red-50 p-2 text-xs text-red-700">{error}</div>
+        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          {error}
+        </div>
       )}
     </div>
   );

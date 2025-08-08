@@ -12,17 +12,17 @@ function clsx(...arr) {
 }
 
 function BasisBadge({ b }) {
-  const color = b === BASES.Z ? 'bg-gray-800 text-white' : 'bg-pink-600 text-white';
-  return <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', color)}>{b}</span>;
+  const color = b === BASES.Z ? 'modern-badge-secondary' : 'modern-badge-primary';
+  return <span className={clsx('modern-badge', color)}>{b}</span>;
 }
 
 function BitBadge({ bit }) {
-  const color = bit ? 'bg-emerald-600 text-white' : 'bg-sky-600 text-white';
-  return <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', color)}>{bit}</span>;
+  const color = bit ? 'modern-badge-success' : 'modern-badge-info';
+  return <span className={clsx('modern-badge', color)}>{bit}</span>;
 }
 
 function QubitBadge({ symbol }) {
-  return <span className="rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">{symbol}</span>;
+  return <span className="modern-badge modern-badge-primary">{symbol}</span>;
 }
 
 const KeyGenerator = () => {
@@ -142,97 +142,123 @@ const KeyGenerator = () => {
   ) : null;
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Quantum Key Generator (Alice)</h2>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={16}
-            max={128}
-            value={length}
-            onChange={(e) => setLength(Number(e.target.value))}
-            className="w-24 rounded border px-2 py-1 text-sm"
-            aria-label="Key length"
-          />
+    <div className="modern-card p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="modern-heading modern-heading-lg">Quantum Key Generator</h2>
+          <p className="modern-text-secondary text-sm mt-1">Alice's Station</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-sm modern-text-secondary">Length:</label>
+            <input
+              type="number"
+              min={16}
+              max={128}
+              value={length}
+              onChange={(e) => setLength(Number(e.target.value))}
+              className="modern-input w-20 text-center"
+              aria-label="Key length"
+            />
+          </div>
           <ControlButton onClick={handleGenerate} loading={loading.generating} disabled={!canGenerate}>
-            Generate Quantum Key
+            Generate Key
           </ControlButton>
-          <ControlButton variant="secondary" onClick={handleReset}>Reset</ControlButton>
+          <ControlButton variant="secondary" onClick={handleReset}>
+            Reset
+          </ControlButton>
         </div>
       </div>
 
-      <StatusIndicator status={qStatus} label="Quantum" error={qError} />
+      <StatusIndicator status={qStatus} label="Quantum Protocol" error={qError} />
 
       {prep && (
-        <div className="space-y-3">
-          <div>
-            <div className="text-sm font-medium text-gray-700">Preparation overview</div>
-            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
-              <div className="rounded border p-3">
-                <div className="mb-1 text-xs text-gray-500">Bases</div>
-                <div className="flex flex-wrap gap-1">
+        <div className="space-y-6">
+          <div className="modern-card p-4">
+            <h3 className="modern-heading modern-heading-sm mb-4">BB84 Protocol Preparation</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-medium mb-2 modern-text-secondary">Measurement Bases</h4>
+                <div className="flex flex-wrap gap-2">
                   {prep.aliceBases.map((b, i) => (
                     <BasisBadge key={`b-${i}`} b={b} />
                   ))}
                 </div>
               </div>
-              <div className="rounded border p-3">
-                <div className="mb-1 text-xs text-gray-500">Bits</div>
-                <div className="flex flex-wrap gap-1">
+              <div>
+                <h4 className="text-sm font-medium mb-2 modern-text-secondary">Random Bits</h4>
+                <div className="flex flex-wrap gap-2">
                   {prep.aliceBits.map((bit, i) => (
                     <BitBadge key={`bit-${i}`} bit={bit} />
                   ))}
                 </div>
               </div>
-              <div className="rounded border p-3 md:col-span-2">
-                <div className="mb-1 text-xs text-gray-500">Quantum states</div>
-                <div className="flex flex-wrap gap-1">
-                  {qubits.map((q, i) => (
-                    <QubitBadge key={`q-${i}`} symbol={q} />
-                  ))}
-                </div>
+            </div>
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2 modern-text-secondary">Quantum States</h4>
+              <div className="flex flex-wrap gap-2">
+                {qubits.map((q, i) => (
+                  <QubitBadge key={`q-${i}`} symbol={q} />
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="rounded border p-3">
+          <div className="modern-card p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-gray-700">Key info</div>
-                <div className="text-xs text-gray-500">Length (post-reconciliation): {session?.keyLength ?? 0} bits</div>
+                <h3 className="modern-heading modern-heading-sm">Generated Quantum Key</h3>
+                <p className="modern-text-secondary text-sm">
+                  Length: {session?.keyLength ?? 0} bits (post-reconciliation)
+                </p>
               </div>
-              <div className="text-xs font-mono text-gray-400">{keyStringGenerated ? `Key: ${'*'.repeat(Math.min(8, keyStringGenerated.length))}…` : 'No key yet'}</div>
+              <div className="text-right">
+                <div className="text-xs modern-text-secondary mb-1">Key Preview</div>
+                <div className="font-mono text-sm bg-gray-100 px-3 py-2 rounded">
+                  {keyStringGenerated ? `${keyStringGenerated.slice(0, 12)}...` : 'No key generated'}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <ControlButton onClick={handleTransmit} disabled={!canTransmit} loading={txInProgress}>
-            Transmit Key via Audio
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <ControlButton 
+            onClick={handleTransmit} 
+            disabled={!canTransmit}
+            loading={txInProgress}
+          >
+            Transmit via Audio
           </ControlButton>
           <ControlButton variant="secondary" onClick={handleTestAudio}>
             Test Audio
           </ControlButton>
-          <ControlButton variant="secondary" onClick={handleCopyPayload} disabled={!generatedKeyBits}>
-            Copy Payload
+          <ControlButton variant="outline" onClick={handleCopyPayload} disabled={!generatedKeyBits}>
+            Copy Quantum Key
           </ControlButton>
-          {txDone && <span className="text-xs text-emerald-700">Transmission completed</span>}
+          {txDone && (
+            <span className="text-sm text-green-600 font-medium">✓ Transmission completed</span>
+          )}
         </div>
-        <StatusIndicator status={aStatus} label="Audio" progress={progress} error={aError} />
         
-        {/* Audio Visualization during transmission */}
-        {(txInProgress || aStatus === 'playing' || aStatus === 'started') && (
-          <div className="rounded border p-3">
-            <div className="text-sm font-medium text-gray-700 mb-2">Audio Transmission</div>
+        <StatusIndicator 
+          status={aStatus} 
+          label="Audio Transmission" 
+          progress={progress} 
+          error={aError} 
+        />
+        
+        {(txInProgress || aStatus === 'playing' || aStatus === 'started') && audioData && (
+          <div className="modern-card p-4">
+            <h4 className="modern-heading modern-heading-sm mb-3">Audio Transmission</h4>
             <AudioVisualizer 
               isActive={txInProgress} 
               audioData={audioData} 
               type="waveform" 
               height={60} 
-              color="#3B82F6" 
+              color="#2563eb" 
             />
           </div>
         )}

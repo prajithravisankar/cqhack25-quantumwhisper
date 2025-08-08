@@ -10,13 +10,13 @@ import { parseAudioPayload } from '@/utils/audioFallback';
 function clsx(...arr) { return arr.filter(Boolean).join(' '); }
 
 function BasisBadge({ b }) {
-  const color = b === BASES.Z ? 'bg-gray-800 text-white' : 'bg-pink-600 text-white';
-  return <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', color)}>{b}</span>;
+  const color = b === BASES.Z ? 'modern-badge-secondary' : 'modern-badge-primary';
+  return <span className={clsx('modern-badge', color)}>{b}</span>;
 }
 
 function BitBadge({ bit }) {
-  const color = bit ? 'bg-emerald-600 text-white' : 'bg-sky-600 text-white';
-  return <span className={clsx('rounded px-1.5 py-0.5 text-[10px] font-semibold', color)}>{bit}</span>;
+  const color = bit ? 'modern-badge-success' : 'modern-badge-info';
+  return <span className={clsx('modern-badge', color)}>{bit}</span>;
 }
 
 const KeyReceiver = () => {
@@ -104,82 +104,104 @@ const KeyReceiver = () => {
   ) : null;
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Quantum Key Receiver (Bob)</h2>
-        <div className="flex items-center gap-2">
+    <div className="modern-card p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="modern-heading modern-heading-lg">Quantum Key Receiver</h2>
+          <p className="modern-text-secondary text-sm mt-1">Bob's Station</p>
+        </div>
+        <div className="flex items-center gap-3">
           <ControlButton onClick={handleListen} disabled={!canListen} loading={listening}>
-            Listen for Quantum Key
+            Listen for Key
           </ControlButton>
-          <ControlButton variant="secondary" onClick={handleStop} disabled={!listening}>Stop</ControlButton>
-          <ControlButton variant="secondary" onClick={handlePastePayload}>Paste Payload</ControlButton>
+          <ControlButton variant="secondary" onClick={handleStop} disabled={!listening}>
+            Stop
+          </ControlButton>
+          <ControlButton variant="outline" onClick={handlePastePayload}>
+            Paste Payload
+          </ControlButton>
         </div>
       </div>
 
-      <StatusIndicator status={aStatus} label="Audio" progress={progress} error={aError} />
+      <StatusIndicator status={aStatus} label="Audio Reception" progress={progress} error={aError} />
 
-      {/* Audio Visualization during listening */}
       {(listening || aStatus === 'listening') && (
-        <div className="rounded border p-3">
-          <div className="text-sm font-medium text-gray-700 mb-2">Audio Reception</div>
+        <div className="modern-card p-4">
+          <h3 className="modern-heading modern-heading-sm mb-3">Audio Reception Active</h3>
           <AudioVisualizer 
             isActive={listening} 
             audioData={audioData} 
             type="level" 
             height={60} 
-            color="#10B981" 
+            color="#10b981" 
           />
         </div>
       )}
 
       {session && (
-        <div className="space-y-3">
-          <div className="rounded border p-3">
-            <div className="mb-1 text-sm font-medium text-gray-700">Basis reconciliation</div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <div className="space-y-6">
+          <div className="modern-card p-4">
+            <h3 className="modern-heading modern-heading-sm mb-4">Basis Reconciliation</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
-                <div className="mb-1 text-xs text-gray-500">Alice bases</div>
-                <div className="flex flex-wrap gap-1">
+                <h4 className="text-sm font-medium mb-2 modern-text-secondary">Alice's Bases</h4>
+                <div className="flex flex-wrap gap-2">
                   {aliceBases.map((b, i) => (
                     <BasisBadge key={`ab-${i}`} b={b} />
                   ))}
                 </div>
               </div>
               <div>
-                <div className="mb-1 text-xs text-gray-500">Bob bases</div>
-                <div className="flex flex-wrap gap-1">
+                <h4 className="text-sm font-medium mb-2 modern-text-secondary">Bob's Bases</h4>
+                <div className="flex flex-wrap gap-2">
                   {bobBasesVis.map((b, i) => (
                     <BasisBadge key={`bb-${i}`} b={b} />
                   ))}
                 </div>
               </div>
             </div>
-            <div className="mt-2">
-              <div className="mb-1 text-xs text-gray-500">Bob measurement results</div>
-              <div className="flex flex-wrap gap-1">
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2 modern-text-secondary">Bob's Measurements</h4>
+              <div className="flex flex-wrap gap-2">
                 {bobResultsVis.map((bit, i) => (
                   <BitBadge key={`br-${i}`} bit={bit} />
                 ))}
               </div>
             </div>
-            <div className="mt-2 text-xs">
-              Matching indices: <span className="font-mono">[{matching.join(', ')}]</span>
+            <div className="mt-4 p-3 bg-gray-50 rounded">
+              <div className="text-sm">
+                <span className="modern-text-secondary">Matching indices: </span>
+                <span className="font-mono text-blue-600">[{matching.join(', ')}]</span>
+              </div>
             </div>
           </div>
 
-          <div className="rounded border p-3">
+          <div className="modern-card p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-gray-700">Received key info</div>
-                <div className="text-xs text-gray-500">Length: {session?.keyLength ?? 0} bits</div>
+                <h3 className="modern-heading modern-heading-sm">Received Quantum Key</h3>
+                <p className="modern-text-secondary text-sm">
+                  Length: {session?.keyLength ?? 0} bits
+                </p>
               </div>
-              <div className="text-xs font-mono text-gray-400">{keyStringReceived ? `Key: ${'*'.repeat(Math.min(8, keyStringReceived.length))}…` : 'No key yet'}</div>
+              <div className="text-right">
+                <div className="text-xs modern-text-secondary mb-1">Key Preview</div>
+                <div className="font-mono text-sm bg-gray-100 px-3 py-2 rounded">
+                  {keyStringReceived ? `${keyStringReceived.slice(0, 12)}...` : 'No key received'}
+                </div>
+              </div>
             </div>
+            
+            {accepted && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+                ✅ Quantum key successfully received and validated!
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <StatusIndicator status={qStatus} label="Quantum" error={qError} />
+      <StatusIndicator status={qStatus} label="Quantum Protocol" error={qError} />
     </div>
   );
 };

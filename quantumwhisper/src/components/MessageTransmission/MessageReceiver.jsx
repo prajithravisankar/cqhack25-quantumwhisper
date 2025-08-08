@@ -143,32 +143,36 @@ const MessageReceiver = () => {
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Secure Message Receiver</h2>
-        <div className="flex gap-2">
-          <ControlButton variant="secondary" onClick={handleClearMessages}>
-            Clear
-          </ControlButton>
+    <div className="modern-card p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="modern-heading modern-heading-lg">Secure Message Receiver</h2>
+          <p className="modern-text-secondary text-sm mt-1">Quantum-encrypted message decryption</p>
         </div>
+        <ControlButton variant="secondary" onClick={handleClearMessages}>
+          Clear History
+        </ControlButton>
       </div>
 
       {/* Key Status */}
-      <div className="rounded border p-3">
+      <div className="modern-card p-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-700">Quantum Key Status</div>
+          <div>
+            <h3 className="modern-heading modern-heading-sm">Quantum Key Status</h3>
+            <p className="modern-text-secondary text-sm">Required for message decryption</p>
+          </div>
           <div className={clsx(
-            'text-xs px-2 py-1 rounded',
-            isKeyValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            'modern-badge',
+            isKeyValid ? 'modern-badge-success' : 'modern-badge-secondary'
           )}>
             {getKeyStatus()}
           </div>
         </div>
       </div>
 
-      {/* Audio Reception Controls */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
+      {/* Reception Controls */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 flex-wrap">
           <ControlButton 
             onClick={handleListen} 
             disabled={!canListen || !isKeyValid}
@@ -184,13 +188,14 @@ const MessageReceiver = () => {
             Stop
           </ControlButton>
           <ControlButton 
-            variant="secondary" 
+            variant="outline" 
             onClick={handlePasteMessage}
             disabled={!isKeyValid}
           >
             Paste Message
           </ControlButton>
         </div>
+        
         <StatusIndicator 
           status={audioStatus} 
           label="Audio Reception" 
@@ -203,16 +208,16 @@ const MessageReceiver = () => {
       {(decrypting || decStatus !== 'idle') && (
         <StatusIndicator 
           status={decrypting ? 'decrypting' : decStatus} 
-          label="Decryption" 
+          label="Decryption Process" 
           error={decError} 
         />
       )}
 
       {/* Current Message Display */}
       {currentMessage && (
-        <div className="rounded border p-3">
-          <div className="text-sm font-medium text-gray-700 mb-2">Latest Decrypted Message</div>
-          <div className="bg-green-50 p-3 rounded text-sm border border-green-200">
+        <div className="modern-card p-4">
+          <h3 className="modern-heading modern-heading-sm mb-3">Latest Decrypted Message</h3>
+          <div className="bg-green-50 p-4 rounded border border-green-200 text-green-800">
             {currentMessage}
           </div>
         </div>
@@ -220,25 +225,25 @@ const MessageReceiver = () => {
 
       {/* Message History */}
       {messages.length > 0 && (
-        <div className="rounded border p-3">
-          <div className="text-sm font-medium text-gray-700 mb-2">Message History</div>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+        <div className="modern-card p-4">
+          <h3 className="modern-heading modern-heading-sm mb-4">Message History</h3>
+          <div className="space-y-3 max-h-64 overflow-y-auto">
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={clsx(
-                  'p-2 rounded text-sm border',
+                  'p-3 rounded border',
                   msg.status === 'decrypted' 
                     ? 'bg-green-50 border-green-200' 
                     : 'bg-red-50 border-red-200'
                 )}
               >
                 <div className="flex justify-between items-start">
-                  <div className="font-medium">{msg.content}</div>
-                  <div className="text-xs text-gray-500">{msg.timestamp}</div>
+                  <div className="font-medium text-sm">{msg.content}</div>
+                  <div className="text-xs modern-text-secondary ml-4">{msg.timestamp}</div>
                 </div>
                 {msg.error && (
-                  <div className="text-xs text-red-600 mt-1">{msg.error}</div>
+                  <div className="text-xs text-red-600 mt-2 font-mono">{msg.error}</div>
                 )}
               </div>
             ))}
@@ -246,9 +251,12 @@ const MessageReceiver = () => {
         </div>
       )}
 
-      {messages.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
-          No messages received yet. Generate a quantum key and listen for encrypted messages.
+      {messages.length === 0 && !currentMessage && (
+        <div className="text-center py-12">
+          <div className="modern-text-secondary text-lg mb-2">No messages received yet</div>
+          <div className="modern-text-muted text-sm">
+            Generate a quantum key and listen for encrypted messages to begin secure communication
+          </div>
         </div>
       )}
     </div>

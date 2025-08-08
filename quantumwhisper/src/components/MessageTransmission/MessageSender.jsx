@@ -102,21 +102,27 @@ const MessageSender = () => {
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Secure Message Sender</h2>
+    <div className="modern-card p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="modern-heading modern-heading-lg">Secure Message Sender</h2>
+          <p className="modern-text-secondary text-sm mt-1">Quantum-encrypted messaging</p>
+        </div>
         <ControlButton variant="secondary" onClick={handleReset}>
           Reset
         </ControlButton>
       </div>
 
       {/* Key Status */}
-      <div className="rounded border p-3">
+      <div className="modern-card p-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-gray-700">Quantum Key Status</div>
+          <div>
+            <h3 className="modern-heading modern-heading-sm">Quantum Key Status</h3>
+            <p className="modern-text-secondary text-sm">Required for message encryption</p>
+          </div>
           <div className={clsx(
-            'text-xs px-2 py-1 rounded',
-            isKeyValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            'modern-badge',
+            isKeyValid ? 'modern-badge-success' : 'modern-badge-secondary'
           )}>
             {getKeyStatus()}
           </div>
@@ -124,8 +130,8 @@ const MessageSender = () => {
       </div>
 
       {/* Message Input */}
-      <div className="space-y-2">
-        <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+      <div className="space-y-3">
+        <label htmlFor="message" className="block modern-heading modern-heading-sm">
           Message to encrypt and send
         </label>
         <textarea
@@ -133,20 +139,20 @@ const MessageSender = () => {
           rows={4}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="modern-input resize-none"
           placeholder="Enter your secret message..."
           disabled={!isKeyValid}
         />
-        <div className="flex justify-between text-xs text-gray-500">
-          <span>Characters: {messageLength}/{MAX_MESSAGE_LENGTH}</span>
+        <div className="flex justify-between text-sm">
+          <span className="modern-text-secondary">Characters: {messageLength}/{MAX_MESSAGE_LENGTH}</span>
           {messageLength > MAX_MESSAGE_LENGTH && (
-            <span className="text-red-600">Message too long for audio transmission</span>
+            <span className="text-red-600 font-medium">Message too long for audio transmission</span>
           )}
         </div>
       </div>
 
       {/* Encryption Controls */}
-      <div className="space-y-2">
+      <div className="space-y-4">
         <ControlButton 
           onClick={handleEncrypt} 
           disabled={!canEncrypt}
@@ -155,46 +161,53 @@ const MessageSender = () => {
         >
           Encrypt Message
         </ControlButton>
-        <StatusIndicator status={encStatus} label="Encryption" error={encError} />
+        <StatusIndicator status={encStatus} label="Encryption Process" error={encError} />
       </div>
 
       {/* Encrypted Package Display */}
       {encryptedPackage && (
-        <div className="rounded border p-3">
-          <div className="text-sm font-medium text-gray-700 mb-2">Encrypted Package</div>
-          <div className="bg-gray-50 p-2 rounded text-xs font-mono break-all">
-            {JSON.stringify(encryptedPackage).substring(0, 100)}...
+        <div className="modern-card p-4">
+          <h3 className="modern-heading modern-heading-sm mb-3">Encrypted Package</h3>
+          <div className="bg-gray-50 p-3 rounded font-mono text-sm text-gray-600 break-all border">
+            {JSON.stringify(encryptedPackage).substring(0, 120)}...
           </div>
         </div>
       )}
 
-      {/* Audio Transmission */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <ControlButton 
-            onClick={handleTransmit} 
-            disabled={!canTransmit}
-            loading={transmitting}
-          >
-            Transmit via Audio
-          </ControlButton>
-          <ControlButton 
-            variant="secondary"
-            onClick={handleCopyMessage} 
-            disabled={!canCopy}
-          >
-            Copy Message
-          </ControlButton>
-          {transmitted && <span className="text-xs text-emerald-700">Message transmitted</span>}
-          {copied && <span className="text-xs text-blue-700">Message copied</span>}
+      {/* Transmission Controls */}
+      {encryptedPackage && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <ControlButton 
+              onClick={handleTransmit} 
+              disabled={!canTransmit}
+              loading={transmitting}
+            >
+              Transmit via Audio
+            </ControlButton>
+            <ControlButton 
+              variant="secondary"
+              onClick={handleCopyMessage} 
+              disabled={!canCopy}
+            >
+              Copy Message
+            </ControlButton>
+            {transmitted && (
+              <span className="text-sm text-green-600 font-medium">✓ Message transmitted</span>
+            )}
+            {copied && (
+              <span className="text-sm text-blue-600 font-medium">✓ Message copied</span>
+            )}
+          </div>
+          
+          <StatusIndicator 
+            status={audioStatus} 
+            label="Audio Transmission" 
+            progress={audioProgress} 
+            error={audioError} 
+          />
         </div>
-        <StatusIndicator 
-          status={audioStatus} 
-          label="Audio Transmission" 
-          progress={audioProgress} 
-          error={audioError} 
-        />
-      </div>
+      )}
     </div>
   );
 };
