@@ -45,4 +45,13 @@
 
 ---
 
+### 2.1.1 Create quantum state representation (utils/quantumSimulator.js)
+
+- Defined quantum bit states for BB84: `|0⟩`, `|1⟩`, `|+⟩`, `|-⟩`
+- Created basis representation for Z-basis (`0/1`) and X-basis (`+/-`)
+- Implemented function to encode a classical bit and basis into a quantum state symbol
+- Added function to simulate quantum measurement, returning the original bit if bases match or a random bit if
+
+---
+
 This document summarizes the progress made so far and provides guidance for future developers working on the project.
