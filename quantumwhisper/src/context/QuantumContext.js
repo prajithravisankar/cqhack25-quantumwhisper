@@ -1,8 +1,124 @@
-import { createContext } from 'react';
+import { createContext, useCallback, useMemo, useState } from 'react';
+import { runBB84, bitsToString, arraysEqual } from '@/utils/quantumSimulator';
 
 /**
  * Context for managing quantum-related state globally.
  */
 const QuantumContext = createContext();
+
+export function QuantumProvider({ children }) {
+  const [generatedKeyBits, setGeneratedKeyBits] = useState(null);
+  const [receivedKeyBits, setReceivedKeyBits] = useState(null);
+  const [session, setSession] = useState(null);
+  const [status, setStatus] = useState('idle'); // 'idle' | 'generating' | 'generated' | 'receiving' | 'received' | 'matched' | 'mismatch' | 'error'
+  const [loading, setLoading] = useState({ generating: false, receiving: false });
+  const [error, setError] = useState(null);
+
+  const validateKeyBits = useCallback((bits) => {
+    return Array.isArray(bits) && bits.length >= 16 && bits.every((b) => b === 0 || b === 1);
+  }, []);
+
+  const compareKeys = useCallback((a, b) => {
+    return arraysEqual(a ?? [], b ?? []);
+  }, []);
+
+  const generateQuantumKey = useCallback(async (length = 32) => {
+    setLoading((l) => ({ ...l, generating: true }));
+    setError(null);
+    setStatus('generating');
+    try {
+      const s = runBB84(length);
+      setSession(s);
+      setGeneratedKeyBits(s.aliceKeyBits);
+      if (!s.valid) {
+        setStatus('error');
+        setError('Generated key too short (< 16 bits). Try again.');
+        return { ok: false, session: s };
+      }
+      setStatus('generated');
+      return { ok: true, session: s };
+    } catch (e) {
+      setError(e?.message || 'Failed to generate key');
+      setStatus('error');
+      return { ok: false, error: e };
+    } finally {
+      setLoading((l) => ({ ...l, generating: false }));
+    }
+  }, []);
+
+  const receiveQuantumKey = useCallback(
+    async (bits) => {
+      setLoading((l) => ({ ...l, receiving: true }));
+      setError(null);
+      setStatus('receiving');
+      try {
+        if (!validateKeyBits(bits)) {
+          throw new Error('Invalid key bits (only 0/1, min length 16).');
+        }
+        setReceivedKeyBits(bits);
+        const match = compareKeys(generatedKeyBits ?? [], bits);
+        setStatus(match ? 'matched' : 'mismatch');
+        return { ok: true, match };
+      } catch (e) {
+        setError(e?.message || 'Failed to receive key');
+        setStatus('error');
+        return { ok: false, error: e };
+      } finally {
+        setLoading((l) => ({ ...l, receiving: false }));
+      }
+    },
+    [compareKeys, generatedKeyBits, validateKeyBits]
+  );
+
+  const clearKeys = useCallback(() => {
+    setGeneratedKeyBits(null);
+    setReceivedKeyBits(null);
+    setSession(null);
+    setStatus('idle');
+    setError(null);
+    setLoading({ generating: false, receiving: false });
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      // state
+      generatedKeyBits,
+      receivedKeyBits,
+      session,
+      status,
+      loading,
+      error,
+      keyStringGenerated: bitsToString(generatedKeyBits || []),
+      keyStringReceived: bitsToString(receivedKeyBits || []),
+      isKeyValid: validateKeyBits(generatedKeyBits || []),
+      areKeysMatching: compareKeys(generatedKeyBits || [], receivedKeyBits || []),
+
+      // actions
+      generateQuantumKey,
+      receiveQuantumKey,
+      clearKeys,
+
+      // utils
+      validateKeyBits,
+      compareKeys,
+      bitsToString,
+    }),
+    [
+      generatedKeyBits,
+      receivedKeyBits,
+      session,
+      status,
+      loading,
+      error,
+      validateKeyBits,
+      compareKeys,
+      generateQuantumKey,
+      receiveQuantumKey,
+      clearKeys,
+    ]
+  );
+
+  return <QuantumContext.Provider value={value}>{children}</QuantumContext.Provider>;
+}
 
 export default QuantumContext;
