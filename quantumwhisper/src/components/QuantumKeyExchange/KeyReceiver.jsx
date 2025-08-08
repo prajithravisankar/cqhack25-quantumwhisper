@@ -4,7 +4,7 @@ import StatusIndicator from '@/components/Common/StatusIndicator';
 import QuantumContext from '@/context/QuantumContext';
 import useAudioProcessor from '@/hooks/useAudioProcessor';
 import AudioVisualizer from '@/components/AudioCommunication/AudioVisualizer';
-import { BASES } from '@/utils/quantumSimulator';
+import { BASES, simulateBobMeasurement } from '@/utils/quantumSimulator';
 import { parseAudioPayload } from '@/utils/audioFallback';
 
 function clsx(...arr) { return arr.filter(Boolean).join(' '); }
@@ -21,23 +21,19 @@ function BitBadge({ bit }) {
 
 const KeyReceiver = () => {
   const {
-    session,
     status: qStatus,
     loading,
     error: qError,
     receivedKeyBits,
     keyStringReceived,
-    generateQuantumKey, // optional local sim to show Bob choices
     receiveQuantumKey: acceptKey,
   } = useContext(QuantumContext);
 
   const { status: aStatus, progress, error: aError, receiveQuantumKey: startListening, stopReception, parseTransmittedQuantumKey } = useAudioProcessor();
 
   const [listening, setListening] = useState(false);
-  const [bobBases, setBobBases] = useState([]);
-  const [bobResults, setBobResults] = useState([]);
-  const [reconIdx, setReconIdx] = useState([]);
   const [accepted, setAccepted] = useState(false);
+  const [bobSession, setBobSession] = useState(null); // Bob's own session after receiving Alice's key
 
   const canListen = !listening && aStatus !== 'listening';
 
@@ -82,9 +78,36 @@ const KeyReceiver = () => {
         throw new Error('Invalid payload format or too short');
       }
       
-      const res = await acceptKey(bits);
+      // Simulate Bob's complete BB84 measurement process
+      const bobSimulation = simulateBobMeasurement(bits);
+      console.log('Bob\'s simulation:', bobSimulation);
+      
+      // In a real BB84 protocol, Alice and Bob would communicate their bases
+      // and both would derive the same final key. For demo purposes, we'll
+      // use Alice's original key (the received bits) as the final key.
+      const finalKey = bits; // Use Alice's key directly
+      
+      // Set Bob's session data for visualization
+      setBobSession({
+        aliceBits: bobSimulation.aliceBits,
+        aliceBases: bobSimulation.aliceBases,
+        bobBases: bobSimulation.bobBases,
+        bobResults: bobSimulation.bobResults,
+        matchingIndices: bobSimulation.matchingIndices,
+        keyLength: finalKey.length,
+        finalKey: finalKey, // Use Alice's key
+        valid: true,
+        efficiency: bobSimulation.efficiency
+      });
+      
+      // Accept the key in the global context
+      const res = await acceptKey(finalKey);
       setAccepted(res.ok);
       console.log('Key acceptance result:', res);
+      
+      if (res.ok) {
+        console.log(`✅ Bob successfully received and processed quantum key: ${finalKey.length} bits`);
+      }
     } catch (e) {
       console.error('Failed to process pasted payload:', e);
       // Show user-friendly error
@@ -92,11 +115,11 @@ const KeyReceiver = () => {
     }
   };
 
-  // Visualization pulled from session if available
-  const matching = useMemo(() => session?.matchingIndices || [], [session]);
-  const aliceBases = session?.aliceBases || [];
-  const bobBasesVis = session?.bobBases || [];
-  const bobResultsVis = session?.bobResults || [];
+  // Visualization pulled from bobSession if available (only after Bob receives Alice's key)
+  const matching = useMemo(() => bobSession?.matchingIndices || [], [bobSession]);
+  const aliceBases = bobSession?.aliceBases || [];
+  const bobBasesVis = bobSession?.bobBases || [];
+  const bobResultsVis = bobSession?.bobResults || [];
 
   // Audio visualization data
   const audioData = progress?.rms ? Array(50).fill(0).map((_, i) => 
@@ -138,7 +161,7 @@ const KeyReceiver = () => {
         </div>
       )}
 
-      {session && (
+      {bobSession && (
         <div className="space-y-6">
           <div className="modern-card p-4">
             <h3 className="modern-heading modern-heading-sm mb-4">Basis Reconciliation</h3>
@@ -181,7 +204,7 @@ const KeyReceiver = () => {
               <div>
                 <h3 className="modern-heading modern-heading-sm">Received Quantum Key</h3>
                 <p className="modern-text-secondary text-sm">
-                  Length: {session?.keyLength ?? 0} bits
+                  Length: {bobSession?.keyLength ?? 0} bits
                 </p>
               </div>
               <div className="text-right">

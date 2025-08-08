@@ -14,8 +14,10 @@ export function QuantumProvider({ children }) {
   const [loading, setLoading] = useState({ generating: false, receiving: false });
   const [error, setError] = useState(null);
 
-  const validateKeyBits = useCallback((bits) => {
-    return Array.isArray(bits) && bits.length >= 16 && bits.every((b) => b === 0 || b === 1);
+  const validateKeyBits = useCallback((bits, isReceived = false) => {
+    // For received keys (after basis reconciliation), accept shorter keys
+    const minLength = isReceived ? 8 : 16;
+    return Array.isArray(bits) && bits.length >= minLength && bits.every((b) => b === 0 || b === 1);
   }, []);
 
   const compareKeys = useCallback((a, b) => {
@@ -58,8 +60,8 @@ export function QuantumProvider({ children }) {
       setError(null);
       setStatus('receiving');
       try {
-        if (!validateKeyBits(bits)) {
-          throw new Error('Invalid key bits (only 0/1, min length 16).');
+        if (!validateKeyBits(bits, true)) { // Mark as received key
+          throw new Error('Invalid key bits (only 0/1, min length 8 for received keys).');
         }
         setReceivedKeyBits(bits);
         const match = compareKeys(generatedKeyBits ?? [], bits);

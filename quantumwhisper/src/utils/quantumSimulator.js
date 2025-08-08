@@ -305,6 +305,51 @@ export function runBB84WithMinKeyLength(minKeyLength = 16, maxAttempts = 5) {
   return finalSession;
 }
 
+/**
+ * Simulate Bob's complete measurement process when receiving Alice's transmitted key.
+ * This function creates Bob's measurement bases and simulates what would happen
+ * in a real BB84 protocol exchange.
+ * @param {number[]} receivedBits - The bits Bob received from Alice
+ * @returns {object} Complete simulation of Bob's side of BB84
+ */
+export function simulateBobMeasurement(receivedBits) {
+  const numQubits = receivedBits.length;
+  
+  // Bob generates his own random measurement bases
+  const bobBases = bobGenerateMeasurementBases(numQubits);
+  
+  // For demo purposes, we need to simulate what Alice's original bits and bases might have been
+  // In a real protocol, Bob wouldn't know these, but for visualization we need to show the process
+  const aliceBits = [...receivedBits]; // Assume the received bits were Alice's original bits
+  const aliceBases = generateRandomBases(numQubits); // Generate plausible Alice bases
+  
+  // Bob measures the quantum states (simulated)
+  const { results: bobResults } = bobMeasureQuantumStates(aliceBits, aliceBases, bobBases);
+  
+  // Basis reconciliation to extract the key
+  const reconciliation = reconcileBases(aliceBases, bobBases, aliceBits, bobResults);
+  
+  return {
+    // Alice's simulated data (for visualization)
+    aliceBits,
+    aliceBases,
+    
+    // Bob's data
+    bobBases,
+    bobResults,
+    
+    // Reconciliation results
+    matchingIndices: reconciliation.matchingIndices,
+    finalKey: reconciliation.aliceKeyBits, // The extracted key
+    keyLength: reconciliation.keyLength,
+    valid: reconciliation.valid,
+    
+    // Metadata
+    totalQubits: numQubits,
+    efficiency: reconciliation.keyLength / numQubits,
+  };
+}
+
 export default {
   QUBIT_STATES,
   BASES,
@@ -323,4 +368,5 @@ export default {
   runBB84,
   runBB84WithMinKeyLength,
   simulateQuantumKey,
+  simulateBobMeasurement,
 };
