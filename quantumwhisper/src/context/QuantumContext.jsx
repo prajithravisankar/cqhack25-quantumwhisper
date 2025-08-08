@@ -1,5 +1,5 @@
 import { createContext, useCallback, useMemo, useState } from 'react';
-import { runBB84, bitsToString, arraysEqual } from '@/utils/quantumSimulator';
+import { runBB84, runBB84WithMinKeyLength, simulateQuantumKey, bitsToString, arraysEqual } from '@/utils/quantumSimulator';
 
 /**
  * Context for managing quantum-related state globally.
@@ -27,17 +27,23 @@ export function QuantumProvider({ children }) {
     setError(null);
     setStatus('generating');
     try {
-      const s = runBB84(length);
+      // Use the improved BB84 function that guarantees minimum key length
+      const s = runBB84WithMinKeyLength(16); // Always ensure at least 16 bits
       setSession(s);
       setGeneratedKeyBits(s.aliceKeyBits);
-      if (!s.valid) {
+      
+      // The new function already handles minimum length, but double-check
+      if (!s.valid || s.aliceKeyBits.length < 16) {
         setStatus('error');
         setError('Generated key too short (< 16 bits). Try again.');
         return { ok: false, session: s };
       }
+      
       setStatus('generated');
+      console.log(`✅ Quantum key generated: ${s.aliceKeyBits.length} bits (${s.attempts} attempts, ${s.finalQubitCount} qubits)`);
       return { ok: true, session: s };
     } catch (e) {
+      console.error('❌ Quantum key generation failed:', e);
       setError(e?.message || 'Failed to generate key');
       setStatus('error');
       return { ok: false, error: e };

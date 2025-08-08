@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { QuantumProvider } from '@/context/QuantumContext';
 import KeyGenerator from '@/components/QuantumKeyExchange/KeyGenerator';
 import KeyReceiver from '@/components/QuantumKeyExchange/KeyReceiver';
@@ -7,47 +7,6 @@ import MessageReceiver from '@/components/MessageTransmission/MessageReceiver';
 import AudioVisualizer from '@/components/AudioCommunication/AudioVisualizer';
 
 function App() {
-  useEffect(() => {
-    // Run comprehensive GGWave test
-    import('@/utils/ggwaveDebug.js').then(() => {
-      console.log('GGWave debug tests completed - check console output above');
-    }).catch(error => {
-      console.log('GGWave debug test failed:', error);
-    });
-
-    // Test successful GGWave implementation
-    const testGGWaveSuccess = async () => {
-      try {
-        console.log('\n🎉 === GGWave Successfully Fixed! ===');
-        
-        // Quick test to confirm it's working
-        const ggwaveModule = await import('ggwave');
-        const ggwaveFactory = ggwaveModule.default;
-        const ggwave = await ggwaveFactory();
-        const parameters = ggwave.getDefaultParameters();
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
-        parameters.sampleRateInp = audioContext.sampleRate;
-        parameters.sampleRateOut = audioContext.sampleRate;
-        const instance = ggwave.init(parameters);
-        
-        // Test encode
-        const testData = "Test";
-        const waveform = ggwave.encode(instance, testData, ggwave.ProtocolId?.GGWAVE_PROTOCOL_AUDIBLE_FAST || 1, 10);
-        
-        console.log('✅ GGWave Status: FULLY OPERATIONAL');
-        console.log(`✅ Test Encode: ${waveform?.length} samples generated`);
-        console.log('✅ Audio Transmission: Ready');
-        console.log('✅ Quantum Key Exchange: Functional');
-        console.log('🚀 Ready for production use!\n');
-        
-      } catch (error) {
-        console.error('❌ GGWave test failed:', error);
-      }
-    };
-
-    // Run success test after a short delay
-    setTimeout(testGGWaveSuccess, 500);
-  }, []);
 
   return (
     <QuantumProvider>

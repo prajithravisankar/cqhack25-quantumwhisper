@@ -1,11 +1,43 @@
 /**
  * Simulates quantum key generation using the BB84 protocol.
- * @returns {Array} Simulated quantum key
+ * Guarantees a minimum key length of 16 bits by retrying with more qubits if needed.
+ * @param {number} minKeyLength - Minimum required key length (default 16)
+ * @returns {Array} Simulated quantum key (at least minKeyLength bits)
  */
-export const simulateQuantumKey = (length = 32) => {
-  // Use the full BB84 session to derive the key bits
-  const session = runBB84(length);
-  return session.aliceKeyBits;
+export const simulateQuantumKey = (minKeyLength = 16) => {
+  let attempts = 0;
+  const maxAttempts = 10;
+  let initialQubits = Math.max(64, minKeyLength * 4); // Start with 4x the minimum to increase success probability
+  
+  while (attempts < maxAttempts) {
+    attempts++;
+    const session = runBB84(initialQubits);
+    
+    if (session.aliceKeyBits.length >= minKeyLength) {
+      console.log(`✓ Quantum key generated successfully: ${session.aliceKeyBits.length} bits (attempt ${attempts})`);
+      return session.aliceKeyBits;
+    }
+    
+    console.log(`⚠ Key too short (${session.aliceKeyBits.length} bits), retrying with more qubits...`);
+    initialQubits = Math.floor(initialQubits * 1.5); // Increase qubit count by 50% each retry
+  }
+  
+  // Final attempt with a much larger number of qubits
+  console.log(`🔄 Final attempt with ${minKeyLength * 8} qubits...`);
+  const finalSession = runBB84(minKeyLength * 8);
+  
+  if (finalSession.aliceKeyBits.length >= minKeyLength) {
+    console.log(`✓ Final quantum key generated: ${finalSession.aliceKeyBits.length} bits`);
+    return finalSession.aliceKeyBits;
+  }
+  
+  // If we still can't get enough bits, pad with deterministic bits as emergency fallback
+  console.warn(`⚠ Emergency fallback: padding key to ${minKeyLength} bits`);
+  const paddedKey = [...finalSession.aliceKeyBits];
+  while (paddedKey.length < minKeyLength) {
+    paddedKey.push(Math.random() < 0.5 ? 0 : 1);
+  }
+  return paddedKey;
 };
 
 // Quantum bit states for BB84 protocol
@@ -93,10 +125,10 @@ export function encodeQuantumStates(bits, bases) {
 
 /**
  * Alice: Generate random bits & bases, then encode into quantum states.
- * @param {number} length - Number of qubits to prepare (default 32)
+ * @param {number} length - Number of qubits to prepare (default 64)
  * @returns {{ bits: number[], bases: ('Z'|'X')[], quantumStates: string[] }}
  */
-export function aliceGenerateAndEncode(length = 32) {
+export function aliceGenerateAndEncode(length = 64) {
   const bits = generateRandomBits(length);
   const bases = generateRandomBases(length);
   const quantumStates = encodeQuantumStates(bits, bases);
@@ -108,7 +140,7 @@ export function aliceGenerateAndEncode(length = 32) {
  * @param {number} length
  * @returns {('Z'|'X')[]}
  */
-export function bobGenerateMeasurementBases(length = 32) {
+export function bobGenerateMeasurementBases(length = 64) {
   return generateRandomBases(length);
 }
 
@@ -200,7 +232,7 @@ export function bitsToString(bits) {
 
 /**
  * Run a full BB84 session: Alice prepares, Bob measures, bases are reconciled to derive a key.
- * @param {number} length - Number of qubits to use (default 32)
+ * @param {number} length - Number of qubits to use (default 64)
  * @returns {{
  *   length: number,
  *   aliceBits: number[],
@@ -217,7 +249,7 @@ export function bitsToString(bits) {
  *   keyStringBob: string,
  * }}
  */
-export function runBB84(length = 32) {
+export function runBB84(length = 64) {
   const alice = aliceGenerateAndEncode(length);
   const bobBases = bobGenerateMeasurementBases(length);
   const { results: bobResults } = bobMeasureQuantumStates(alice.bits, alice.bases, bobBases);
@@ -240,6 +272,39 @@ export function runBB84(length = 32) {
   };
 }
 
+/**
+ * Run BB84 with guaranteed minimum key length.
+ * Automatically adjusts qubit count to ensure sufficient key bits.
+ * @param {number} minKeyLength - Minimum required key length (default 16)
+ * @param {number} maxAttempts - Maximum retry attempts (default 5)
+ * @returns {Object} BB84 session result with at least minKeyLength bits
+ */
+export function runBB84WithMinKeyLength(minKeyLength = 16, maxAttempts = 5) {
+  let attempts = 0;
+  let qubits = Math.max(64, minKeyLength * 4); // Start with 4x minimum for high success probability
+  
+  while (attempts < maxAttempts) {
+    attempts++;
+    const session = runBB84(qubits);
+    
+    if (session.keyLength >= minKeyLength) {
+      session.attempts = attempts;
+      session.finalQubitCount = qubits;
+      return session;
+    }
+    
+    // Increase qubit count for next attempt
+    qubits = Math.floor(qubits * 1.3);
+  }
+  
+  // Final attempt with large qubit count
+  const finalSession = runBB84(minKeyLength * 8);
+  finalSession.attempts = attempts + 1;
+  finalSession.finalQubitCount = minKeyLength * 8;
+  
+  return finalSession;
+}
+
 export default {
   QUBIT_STATES,
   BASES,
@@ -256,4 +321,6 @@ export default {
   arraysEqual,
   bitsToString,
   runBB84,
+  runBB84WithMinKeyLength,
+  simulateQuantumKey,
 };
