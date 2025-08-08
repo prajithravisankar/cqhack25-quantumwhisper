@@ -3,7 +3,9 @@ import ControlButton from '@/components/Common/ControlButton';
 import StatusIndicator from '@/components/Common/StatusIndicator';
 import QuantumContext from '@/context/QuantumContext';
 import useAudioProcessor from '@/hooks/useAudioProcessor';
+import AudioVisualizer from '@/components/AudioCommunication/AudioVisualizer';
 import { BASES } from '@/utils/quantumSimulator';
+import { parseAudioPayload } from '@/utils/audioFallback';
 
 function clsx(...arr) { return arr.filter(Boolean).join(' '); }
 
@@ -58,13 +60,35 @@ const KeyReceiver = () => {
   const handlePastePayload = async () => {
     try {
       const text = await navigator.clipboard.readText();
+      console.log('Pasted text:', text);
+      
+      // Try multiple payload formats
+      let bits = null;
+      
+      // Try GGWave format first
       const unpacked = parseTransmittedQuantumKey(text.trim());
-      if (!unpacked) throw new Error('Invalid or no payload in clipboard');
-      const bits = unpacked.bits;
+      if (unpacked && unpacked.bits) {
+        bits = unpacked.bits;
+        console.log('Parsed as GGWave payload:', bits.length, 'bits');
+      } else {
+        // Try fallback format
+        bits = parseAudioPayload(text.trim());
+        if (bits) {
+          console.log('Parsed as fallback payload:', bits.length, 'bits');
+        }
+      }
+      
+      if (!bits || !Array.isArray(bits) || bits.length < 16) {
+        throw new Error('Invalid payload format or too short');
+      }
+      
       const res = await acceptKey(bits);
       setAccepted(res.ok);
+      console.log('Key acceptance result:', res);
     } catch (e) {
-      console.error(e);
+      console.error('Failed to process pasted payload:', e);
+      // Show user-friendly error
+      alert(`Failed to process pasted data: ${e.message}\n\nPlease ensure you've copied the correct payload from the generator.`);
     }
   };
 
@@ -73,6 +97,11 @@ const KeyReceiver = () => {
   const aliceBases = session?.aliceBases || [];
   const bobBasesVis = session?.bobBases || [];
   const bobResultsVis = session?.bobResults || [];
+
+  // Audio visualization data
+  const audioData = progress?.rms ? Array(50).fill(0).map((_, i) => 
+    Math.sin(i * 0.5) * (progress.rms || 0) * 3
+  ) : null;
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -88,6 +117,20 @@ const KeyReceiver = () => {
       </div>
 
       <StatusIndicator status={aStatus} label="Audio" progress={progress} error={aError} />
+
+      {/* Audio Visualization during listening */}
+      {(listening || aStatus === 'listening') && (
+        <div className="rounded border p-3">
+          <div className="text-sm font-medium text-gray-700 mb-2">Audio Reception</div>
+          <AudioVisualizer 
+            isActive={listening} 
+            audioData={audioData} 
+            type="level" 
+            height={60} 
+            color="#10B981" 
+          />
+        </div>
+      )}
 
       {session && (
         <div className="space-y-3">
