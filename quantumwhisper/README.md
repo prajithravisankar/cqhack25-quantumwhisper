@@ -1,12 +1,12 @@
-# 🎃 QuantumWhisper - Halloween Edition
+# QuantumWhisper
 
-A spooky quantum cryptography demonstration app featuring file-based quantum key exchange and secure messaging with a dark Halloween theme.
+A quantum cryptography demonstration app featuring file-based quantum key exchange and secure messaging.
 
 ## 🌟 Features
 
 - **File-Based Quantum Key Exchange**: Generate and share quantum keys via WAV file download/upload
 - **Secure Message Encryption**: Copy/paste encrypted messages using quantum-derived keys
-- **Halloween Dark Theme**: Spooky orange and black design with glowing effects
+- **Modern Dark Theme**: Clean and professional design with subtle effects
 - **Multi-Page Navigation**: Separate pages for key exchange and messaging
 - **Responsive Design**: Works on desktop and mobile devices
 - **No Audio Transmission**: Pure file-based workflow for maximum compatibility

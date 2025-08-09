@@ -4,90 +4,67 @@ import { Link } from 'react-router-dom';
 const HomePage = () => {
   return (
     <div className="quantum-bg min-h-screen">
-      <div className="modern-container py-12">
+      <div className="modern-container py-16">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="quantum-heading-xl mb-6 quantum-flicker">
-            🎃 QuantumWhisper 🎃
+        <div className="text-center mb-24">
+          <h1 className="quantum-heading-xl mb-8 quantum-flicker">
+            QuantumWhisper
           </h1>
-          <p className="text-xl quantum-text mb-8 max-w-3xl mx-auto">
-            Experience quantum cryptography with a spooky twist! Exchange quantum keys 
-            and send encrypted messages using the mystical powers of the BB84 protocol.
+          <p className="text-xl quantum-text mb-12 max-w-3xl mx-auto leading-relaxed">
+            Experience quantum cryptography! Exchange quantum keys 
+            and send encrypted messages using the power of the BB84 protocol.
           </p>
           <div className="quantum-glow text-lg quantum-text-muted">
-            Perfect your dark arts of quantum communication this Halloween season
+            Master the art of quantum communication
           </div>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <div className="quantum-card p-8 text-center quantum-float">
-            <div className="text-6xl mb-4">🔮</div>
-            <h2 className="quantum-heading-lg mb-4">Step 1: Quantum Key Exchange</h2>
-            <p className="quantum-text mb-6">
+        <div className="grid md:grid-cols-2 mb-24" style={{gap: '50px'}}>
+          <div className="quantum-card p-12 text-center quantum-float" style={{marginTop: '30px', marginBottom: '30px'}}>
+            <div className="text-6xl mb-8">🔮</div>
+            <h2 className="quantum-heading-lg mb-6">Step 1: Quantum Key Exchange</h2>
+            <p className="quantum-text mb-8 leading-relaxed">
               Generate and exchange quantum keys using the BB84 protocol. 
               Alice creates mystical quantum states, Bob measures them, 
               and together they conjure matching cryptographic keys.
             </p>
-            <Link to="/key-exchange" className="quantum-button">
-              Enter the Quantum Realm
-            </Link>
+            <div style={{marginTop: '45px', marginBottom: '20px'}}>
+              <Link to="/key-exchange" className="quantum-button">
+                Enter the Quantum Realm
+              </Link>
+            </div>
           </div>
 
-          <div className="quantum-card p-8 text-center quantum-float" style={{animationDelay: '0.5s'}}>
-            <div className="text-6xl mb-4">💀</div>
-            <h2 className="quantum-heading-lg mb-4">Step 2: Encrypted Messaging</h2>
-            <p className="quantum-text mb-6">
-              Send secret messages encrypted with your quantum keys. 
-              Share dark secrets that only the keyholder can decipher. 
-              Copy, paste, and haunt your communications with security.
+          <div className="quantum-card p-12 text-center quantum-float" style={{animationDelay: '0.5s', marginTop: '30px', marginBottom: '30px'}}>
+            <div className="text-6xl mb-8">💬</div>
+            <h2 className="quantum-heading-lg mb-6">Step 2: Encrypted Messaging</h2>
+            <p className="quantum-text mb-8 leading-relaxed">
+              Send secure messages encrypted with your quantum keys. 
+              Share confidential information that only the keyholder can decipher. 
+              Copy, paste, and secure your communications with encryption.
             </p>
-            <Link to="/messaging" className="quantum-button">
-              Encrypt Dark Messages
-            </Link>
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          <div className="quantum-card p-6 text-center">
-            <div className="text-3xl mb-3">🕸️</div>
-            <h3 className="quantum-heading-md mb-2">BB84 Protocol</h3>
-            <p className="quantum-text-muted text-sm">
-              Authentic quantum key distribution using polarized states
-            </p>
-          </div>
-          
-          <div className="quantum-card p-6 text-center">
-            <div className="text-3xl mb-3">🦇</div>
-            <h3 className="quantum-heading-md mb-2">File-Based Exchange</h3>
-            <p className="quantum-text-muted text-sm">
-              Download/upload audio files for reliable key transmission
-            </p>
-          </div>
-          
-          <div className="quantum-card p-6 text-center">
-            <div className="text-3xl mb-3">🔐</div>
-            <h3 className="quantum-heading-md mb-2">Copy/Paste Security</h3>
-            <p className="quantum-text-muted text-sm">
-              Simple encrypted message sharing via clipboard
-            </p>
+            <div style={{marginTop: '45px', marginBottom: '20px'}}>
+              <Link to="/messaging" className="quantum-button">
+                Encrypt Messages
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Call to Action */}
         <div className="text-center">
-          <h2 className="quantum-heading-lg mb-4">Ready to Cast Your Quantum Spells?</h2>
-          <p className="quantum-text mb-8 max-w-2xl mx-auto">
-            Begin your journey into the dark arts of quantum cryptography. 
+          <h2 className="quantum-heading-lg mb-6">Ready to Begin Quantum Communication?</h2>
+          <p className="quantum-text mb-12 max-w-2xl mx-auto leading-relaxed">
+            Begin your journey into quantum cryptography. 
             Whether you're Alice or Bob, the quantum realm awaits your commands.
           </p>
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-6">
             <Link to="/key-exchange" className="quantum-button">
-              🎭 Start Key Exchange
+              🔐 Start Key Exchange
             </Link>
             <Link to="/messaging" className="quantum-button-outline">
-              👻 Go to Messaging
+              💬 Go to Messaging
             </Link>
           </div>
         </div>
