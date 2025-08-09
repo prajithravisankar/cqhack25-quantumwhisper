@@ -1,41 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Creepster&family=Nosifer&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Modern Minimalist Design System */
+/* Halloween Quantum Theme - Dark, Orange, White */
 :root {
-  /* Color Palette - Clean and minimal */
-  --color-primary: #2563eb;
-  --color-primary-dark: #1d4ed8;
-  --color-secondary: #64748b;
-  --color-accent: #06b6d4;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  /* Halloween Color Palette */
+  --color-primary: #ff6b35; /* Bright Orange */
+  --color-primary-dark: #e55a2b;
+  --color-primary-light: #ff8a65;
+  --color-secondary: #ff9500; /* Golden Orange */
+  --color-accent: #ffab40; /* Light Orange */
+  --color-success: #ff6b35;
+  --color-warning: #ffa726;
+  --color-error: #ff5722;
   
-  /* Grays - Sophisticated scale */
-  --color-gray-50: #f8fafc;
-  --color-gray-100: #f1f5f9;
-  --color-gray-200: #e2e8f0;
-  --color-gray-300: #cbd5e1;
-  --color-gray-400: #94a3b8;
-  --color-gray-500: #64748b;
-  --color-gray-600: #475569;
-  --color-gray-700: #334155;
-  --color-gray-800: #1e293b;
-  --color-gray-900: #0f172a;
+  /* Dark Theme Grays */
+  --color-black: #000000;
+  --color-gray-900: #0a0a0a;
+  --color-gray-800: #1a1a1a;
+  --color-gray-700: #2a2a2a;
+  --color-gray-600: #3a3a3a;
+  --color-gray-500: #525252;
+  --color-gray-400: #737373;
+  --color-gray-300: #a3a3a3;
+  --color-gray-200: #d4d4d4;
+  --color-gray-100: #f5f5f5;
+  --color-white: #ffffff;
   
-  /* Spacing and sizing */
-  --border-radius: 8px;
-  --border-radius-lg: 12px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* Halloween-specific colors */
+  --color-orange-glow: #ff6b35;
+  --color-dark-bg: #0a0a0a;
+  --color-card-bg: #1a1a1a;
+  --color-border: #2a2a2a;
+  --color-border-orange: #ff6b35;
+  
+  /* Spacing and styling */
+  --border-radius: 12px;
+  --border-radius-lg: 16px;
+  --shadow-dark: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-orange: 0 0 20px rgb(255 107 53 / 0.3);
+  --shadow-orange-lg: 0 0 40px rgb(255 107 53 / 0.5);
+  
+  /* Gradients */
+  --gradient-orange: linear-gradient(135deg, #ff6b35 0%, #ff9500 100%);
+  --gradient-dark: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  --gradient-card: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
 }
 
-/* Base styles */
+/* Base styles - Halloween Dark Theme */
 * {
   margin: 0;
   padding: 0;
@@ -46,27 +60,163 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 400;
   line-height: 1.6;
-  color: var(--color-gray-700);
-  background-color: var(--color-gray-50);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color: var(--color-white);
+  background: var(--gradient-dark);
+  min-height: 100vh;
 }
 
-/* Modern Card Component */
-.modern-card {
-  background: white;
-  border: 1px solid var(--color-gray-200);
+/* Halloween Quantum Theme Classes */
+.quantum-bg {
+  background: var(--gradient-dark);
+  min-height: 100vh;
+}
+
+.quantum-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease-in-out;
+  box-shadow: var(--shadow-dark);
+  transition: all 0.3s ease;
+}
+
+.quantum-card:hover {
+  border-color: var(--color-border-orange);
+  box-shadow: var(--shadow-orange);
+  transform: translateY(-2px);
+}
+
+.quantum-card-orange {
+  background: var(--gradient-card);
+  border: 2px solid var(--color-border-orange);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-orange);
+}
+
+.quantum-button {
+  background: var(--gradient-orange);
+  color: var(--color-black);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quantum-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange-lg);
+  background: linear-gradient(135deg, #ff8a65 0%, #ffab40 100%);
+}
+
+.quantum-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.quantum-button-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--border-radius);
+  padding: 10px 22px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.quantum-button-outline:hover {
+  background: var(--color-primary);
+  color: var(--color-black);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange);
+}
+
+.quantum-input {
+  background: var(--color-gray-800);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-white);
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.quantum-input:focus {
+  outline: none;
+  border-color: var(--color-border-orange);
+  box-shadow: 0 0 0 3px rgb(255 107 53 / 0.2);
+}
+
+.quantum-input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.quantum-heading {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-white);
+}
+
+.quantum-heading-xl {
+  font-size: 3rem;
+  font-family: 'Creepster', cursive;
+  color: var(--color-primary);
+  text-shadow: 0 0 20px rgb(255 107 53 / 0.5);
+}
+
+.quantum-heading-lg {
+  font-size: 2rem;
+  color: var(--color-primary);
+  text-shadow: 0 0 10px rgb(255 107 53 / 0.3);
+}
+
+.quantum-heading-md {
+  font-size: 1.5rem;
+}
+
+.quantum-heading-sm {
+  font-size: 1.25rem;
+}
+
+.quantum-text {
+  color: var(--color-gray-200);
+}
+
+.quantum-text-muted {
+  color: var(--color-gray-400);
+}
+
+.quantum-glow {
+  text-shadow: 0 0 10px var(--color-primary);
+}
+
+/* Quantum-themed modern components */
+.modern-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-dark);
+  transition: all 0.3s ease;
 }
 
 .modern-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-gray-300);
+  border-color: var(--color-border-orange);
+  box-shadow: var(--shadow-orange);
+  transform: translateY(-2px);
 }
 
-/* Modern Button System */
+/* Modern Button System - Halloween Themed */
 .modern-btn {
   display: inline-flex;
   align-items: center;
@@ -74,54 +224,70 @@ body {
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: var(--border-radius);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease;
   text-decoration: none;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .modern-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .modern-btn-primary {
-  background-color: var(--color-primary);
-  color: white;
+  background: var(--gradient-orange);
+  color: var(--color-black);
   border-color: var(--color-primary);
 }
 
 .modern-btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange-lg);
+  background: linear-gradient(135deg, #ff8a65 0%, #ffab40 100%);
 }
 
 .modern-btn-secondary {
-  background-color: white;
-  color: var(--color-gray-700);
-  border-color: var(--color-gray-300);
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
 }
 
 .modern-btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-gray-50);
-  border-color: var(--color-gray-400);
+  background: var(--color-primary);
+  color: var(--color-black);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange);
 }
 
 .modern-btn-outline {
   background-color: transparent;
   color: var(--color-primary);
-  border-color: var(--color-primary);
+  border: 2px solid var(--color-primary);
 }
 
 .modern-btn-outline:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-black);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange);
 }
 
-/* Loading state */
+.modern-btn-outline:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-black);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-orange);
+}
+
+/* Loading state - Halloween themed */
 .modern-btn-loading {
   position: relative;
   color: transparent;
@@ -135,54 +301,60 @@ body {
   transform: translate(-50%, -50%);
   width: 16px;
   height: 16px;
-  border: 2px solid currentColor;
+  border: 2px solid var(--color-primary);
   border-top-color: transparent;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: quantum-spin 0.8s linear infinite;
 }
 
-@keyframes spin {
+@keyframes quantum-spin {
   to {
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
-/* Status Indicator System */
+/* Status Indicator System - Halloween themed */
 .modern-status {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: var(--border-radius);
   text-transform: uppercase;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.5px;
+  border: 1px solid;
 }
 
 .modern-status-idle {
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-600);
+  background-color: var(--color-gray-800);
+  color: var(--color-gray-300);
+  border-color: var(--color-gray-600);
 }
 
 .modern-status-active {
-  background-color: #dbeafe;
+  background-color: rgba(255, 107, 53, 0.1);
   color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .modern-status-success {
-  background-color: #dcfce7;
-  color: var(--color-success);
+  background-color: rgba(255, 107, 53, 0.2);
+  color: var(--color-primary-light);
+  border-color: var(--color-primary);
 }
 
 .modern-status-error {
-  background-color: #fee2e2;
-  color: var(--color-error);
+  background-color: rgba(255, 87, 34, 0.1);
+  color: #ff5722;
+  border-color: #ff5722;
 }
 
 .modern-status-warning {
-  background-color: #fef3c7;
-  color: var(--color-warning);
+  background-color: rgba(255, 167, 38, 0.1);
+  color: #ffa726;
+  border-color: #ffa726;
 }
 
 /* Status indicator dot */
@@ -197,60 +369,79 @@ body {
   animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
+/* Status indicator dot - Halloween themed */
+.modern-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: quantum-pulse 2s ease-in-out infinite;
+}
+
+@keyframes quantum-pulse {
   0%, 100% {
     opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7);
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.8;
+    box-shadow: 0 0 0 10px rgba(255, 107, 53, 0);
   }
 }
 
-/* Badge System */
+/* Badge System - Halloween themed */
 .modern-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 4px;
+  font-weight: 600;
+  border-radius: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.5px;
+  border: 1px solid;
 }
 
 .modern-badge-primary {
-  background-color: #dbeafe;
+  background-color: rgba(255, 107, 53, 0.2);
   color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .modern-badge-secondary {
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-700);
+  background-color: var(--color-gray-800);
+  color: var(--color-gray-300);
+  border-color: var(--color-gray-600);
 }
 
 .modern-badge-success {
-  background-color: #dcfce7;
-  color: var(--color-success);
+  background-color: rgba(255, 107, 53, 0.3);
+  color: var(--color-primary-light);
+  border-color: var(--color-primary);
 }
 
 .modern-badge-info {
-  background-color: #e0f2fe;
+  background-color: rgba(255, 171, 64, 0.2);
   color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
-/* Typography */
+/* Typography - Halloween themed */
 .modern-heading {
   font-weight: 600;
-  color: var(--color-gray-900);
+  color: var(--color-white);
   line-height: 1.3;
 }
 
 .modern-heading-xl {
   font-size: 2rem;
+  color: var(--color-primary);
+  text-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
 }
 
 .modern-heading-lg {
   font-size: 1.5rem;
+  color: var(--color-primary);
 }
 
 .modern-heading-md {
@@ -262,7 +453,7 @@ body {
 }
 
 .modern-text-secondary {
-  color: var(--color-gray-500);
+  color: var(--color-gray-300);
 }
 
 .modern-text-muted {
@@ -284,28 +475,34 @@ body {
   margin-bottom: 0;
 }
 
-/* Input and form elements */
+/* Input and form elements - Halloween themed */
 .modern-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--color-gray-300);
+  background: var(--color-gray-800);
+  border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
+  color: var(--color-white);
   font-size: 0.875rem;
-  transition: border-color 0.2s ease-in-out;
+  transition: all 0.3s ease;
 }
 
 .modern-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+  border-color: var(--color-border-orange);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
 }
 
-/* Animations */
+.modern-input::placeholder {
+  color: var(--color-gray-400);
+}
+
+/* Animations - Quantum themed */
 .modern-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: quantumFadeIn 0.5s ease-in-out;
 }
 
-@keyframes fadeIn {
+@keyframes quantumFadeIn {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -326,73 +523,88 @@ body {
     padding: 0.625rem 1.25rem;
     font-size: 0.8125rem;
   }
-}
-
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+  
+  .quantum-heading-xl {
+    font-size: 2.5rem;
   }
-  a:hover {
-    color: #747bff;
+  
+  .quantum-heading-lg {
+    font-size: 1.75rem;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+/* Special Halloween effects */
+.quantum-flicker {
+  animation: flicker 2s infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+  75% { opacity: 0.9; }
+}
+
+.quantum-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Halloween particle effects */
+.quantum-particles {
+  position: relative;
+  overflow: hidden;
+}
+
+.quantum-particles::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(1px 1px at 20% 30%, var(--color-primary), transparent),
+    radial-gradient(1px 1px at 40% 70%, var(--color-secondary), transparent),
+    radial-gradient(1px 1px at 90% 40%, var(--color-accent), transparent);
+  background-size: 100px 100px, 80px 80px, 120px 120px;
+  animation: quantum-drift 20s linear infinite;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+@keyframes quantum-drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-100px, -100px); }
+}
+
+/* Spooky text effects */
+.quantum-spooky {
+  animation: spooky-glow 3s ease-in-out infinite;
+}
+
+@keyframes spooky-glow {
+  0%, 100% { 
+    text-shadow: 0 0 5px var(--color-primary), 0 0 10px var(--color-primary);
   }
+  50% { 
+    text-shadow: 0 0 20px var(--color-primary), 0 0 30px var(--color-primary), 0 0 40px var(--color-primary);
+  }
+}
+
+/* Halloween loading effect */
+.quantum-loading {
+  position: relative;
+}
+
+.quantum-loading::after {
+  content: '🎃';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: quantum-spin 1s linear infinite;
 }
