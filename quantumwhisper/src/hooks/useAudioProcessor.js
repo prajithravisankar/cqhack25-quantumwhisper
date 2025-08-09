@@ -40,21 +40,34 @@ const useAudioProcessor = () => {
   );
 
   const receiveQuantumKey = useCallback(
-    async ({ timeoutMs = 15000 } = {}) => {
+    async ({ timeoutMs = 15000, onDecoded } = {}) => {
+      console.log('🎧 HOOK DEBUG: receiveQuantumKey() called with params:', { timeoutMs, hasOnDecoded: !!onDecoded });
+      
       setError(null);
       setStatus('preparing');
 
       try {
+        console.log('🎧 HOOK DEBUG: Calling receive() from ggwaveWrapper...');
+        
         const handle = await receive({
           timeoutMs,
+          onDecoded: onDecoded ? (decodedText, unpackedData) => {
+            console.log('🎧 HOOK DEBUG: onDecoded callback received from ggwaveWrapper');
+            console.log('🎧 HOOK DEBUG: Forwarding to KeyReceiver callback...');
+            onDecoded(decodedText, unpackedData);
+          } : undefined,
           onStatus: ({ status: s, ...extra }) => {
+            console.log('🎧 HOOK DEBUG: Status update:', s, extra);
             setStatus(s);
             setProgress(extra || null);
           },
         });
+        
+        console.log('🎧 HOOK DEBUG: receive() completed, handle:', handle);
         receiverRef.current = handle;
         return { ok: true, handle };
       } catch (e) {
+        console.error('🎧 HOOK DEBUG: Error in receiveQuantumKey:', e);
         setError(e?.message || 'Reception failed');
         setStatus('error');
         return { ok: false, error: e };

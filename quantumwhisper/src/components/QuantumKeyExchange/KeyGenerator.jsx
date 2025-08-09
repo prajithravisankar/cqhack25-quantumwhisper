@@ -2,10 +2,9 @@ import React, { useMemo, useState, useContext } from 'react';
 import ControlButton from '@/components/Common/ControlButton';
 import StatusIndicator from '@/components/Common/StatusIndicator';
 import QuantumContext from '@/context/QuantumContext';
-import useAudioProcessor from '@/hooks/useAudioProcessor';
-import AudioVisualizer from '@/components/AudioCommunication/AudioVisualizer';
 import { BASES, encodeQuantumStates } from '@/utils/quantumSimulator';
-import { playTestTone, playQuantumKeyAudio, generateAudioPayload } from '@/utils/audioFallback';
+import { encodeWithGGWave, convertQuantumKeyToTransmittable } from '@/utils/ggwaveWrapper';
+import { downloadWavFile } from '@/utils/audioFileUtils';
 
 function clsx(...arr) {
   return arr.filter(Boolean).join(' ');
@@ -37,14 +36,14 @@ const KeyGenerator = () => {
     clearKeys,
   } = useContext(QuantumContext);
 
-  const { status: aStatus, progress, error: aError, transmitQuantumKey, reset: resetAudio } = useAudioProcessor();
+  const { status: aStatus, progress, error: aError, reset: resetAudio } = { status: 'idle', progress: null, error: null, reset: () => {} };
 
   const [length, setLength] = useState(32);
-  const [txInProgress, setTxInProgress] = useState(false);
-  const [txDone, setTxDone] = useState(false);
+  const [downloadInProgress, setDownloadInProgress] = useState(false);
+  const [downloadDone, setDownloadDone] = useState(false);
 
   const canGenerate = !loading.generating && (qStatus === 'idle' || qStatus === 'generated' || qStatus === 'error');
-  const canTransmit = !!generatedKeyBits && !txInProgress;
+  const canDownload = !!generatedKeyBits && !downloadInProgress;
 
   const prep = session;
   const qubits = useMemo(() => {
@@ -57,71 +56,50 @@ const KeyGenerator = () => {
   }, [prep]);
 
   const handleGenerate = async () => {
-    setTxDone(false);
+    setDownloadDone(false);
     resetAudio();
     await generateQuantumKey(length);
   };
 
-  const handleTransmit = async () => {
+  const handleDownloadSound = async () => {
     if (!generatedKeyBits) return;
-    setTxInProgress(true);
-    setTxDone(false);
+    
+    setDownloadInProgress(true);
+    setDownloadDone(false);
     
     try {
-      // Try GGWave first
-      console.log('Attempting GGWave transmission...');
-      const res = await transmitQuantumKey(generatedKeyBits, { retries: 1 });
-      if (res.ok) {
-        console.log('GGWave transmission successful');
-        setTxDone(true);
-        setTxInProgress(false);
-        return;
-      } else {
-        console.log('GGWave transmission failed:', res.error?.message);
-      }
-    } catch (error) {
-      console.log('GGWave transmission error:', error.message);
-    }
-    
-    // Fallback to simple audio representation
-    try {
-      console.log('Using audio fallback...');
-      await playQuantumKeyAudio(generatedKeyBits.slice(0, 8)); // Play first 8 bits as tones
-      console.log('Audio fallback completed');
-      setTxDone(true);
-    } catch (audioError) {
-      console.log('Audio fallback failed:', audioError.message);
+      console.log('🔽 Starting audio file generation for download...');
       
-      // Last resort: copy to clipboard
-      try {
-        console.log('Using clipboard fallback...');
-        const payload = generateAudioPayload(generatedKeyBits);
-        await navigator.clipboard.writeText(payload);
-        console.log('Key payload copied to clipboard as fallback');
-        alert('Audio transmission failed. Key payload has been copied to clipboard. Paste it in the receiver.');
-        setTxDone(true);
-      } catch (clipError) {
-        console.error('All fallbacks failed:', clipError);
-        alert('All transmission methods failed. Please check console for details.');
+      // Convert quantum key to transmittable format
+      const payload = convertQuantumKeyToTransmittable(generatedKeyBits);
+      console.log('🔽 Generated payload:', payload);
+      
+      // Encode with GGWave to get audio samples
+      const audioSamples = await encodeWithGGWave(payload);
+      console.log('🔽 Generated audio samples:', audioSamples?.length);
+      
+      if (!audioSamples || audioSamples.length === 0) {
+        throw new Error('Failed to generate audio samples');
       }
+      
+      // Download as WAV file (audioFileUtils can handle Int8Array directly)
+      downloadWavFile(audioSamples, 'quantum-key-audio.wav', 48000);
+      
+      console.log('🔽 Audio file download initiated successfully');
+      setDownloadDone(true);
+      
+    } catch (error) {
+      console.error('❌ Failed to generate audio file:', error);
+      alert(`Failed to generate audio file: ${error.message}`);
     }
     
-    setTxInProgress(false);
-  };
-
-  const handleTestAudio = async () => {
-    try {
-      await playTestTone(440, 1000);
-      console.log('Audio test successful');
-    } catch (error) {
-      console.error('Audio test failed:', error);
-    }
+    setDownloadInProgress(false);
   };
 
   const handleCopyPayload = async () => {
     if (!generatedKeyBits) return;
     try {
-      const payload = generateAudioPayload(generatedKeyBits);
+      const payload = convertQuantumKeyToTransmittable(generatedKeyBits);
       await navigator.clipboard.writeText(payload);
       console.log('Key payload copied to clipboard');
     } catch (error) {
@@ -132,17 +110,28 @@ const KeyGenerator = () => {
   const handleReset = () => {
     clearKeys();
     resetAudio();
-    setTxInProgress(false);
-    setTxDone(false);
+    setDownloadInProgress(false);
+    setDownloadDone(false);
   };
-
-  // Audio visualization data
-  const audioData = progress?.rms ? Array(50).fill(0).map((_, i) => 
-    Math.sin(i * 0.3) * (progress.rms || 0) * 2
-  ) : null;
 
   return (
     <div className="modern-card p-6 space-y-6">
+      {/* File Workflow Information Banner */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="text-green-600">📤</div>
+          <h3 className="text-sm font-semibold text-green-800">File-Based Quantum Key Exchange</h3>
+        </div>
+        <p className="text-sm text-green-700 mb-2">
+          Generate quantum keys and download them as audio files to share with Bob.
+        </p>
+        <div className="text-xs text-green-600 space-y-1">
+          <div>• Click "Generate Key" to create a quantum key using BB84 protocol</div>
+          <div>• Click "Download Sound" to save the encoded audio file (.wav)</div>
+          <div>• Share the downloaded file with Bob for decoding</div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="modern-heading modern-heading-lg">Quantum Key Generator</h2>
@@ -226,42 +215,25 @@ const KeyGenerator = () => {
       <div className="space-y-4">
         <div className="flex items-center gap-3 flex-wrap">
           <ControlButton 
-            onClick={handleTransmit} 
-            disabled={!canTransmit}
-            loading={txInProgress}
+            onClick={handleDownloadSound} 
+            disabled={!canDownload}
+            loading={downloadInProgress}
           >
-            Transmit via Audio
-          </ControlButton>
-          <ControlButton variant="secondary" onClick={handleTestAudio}>
-            Test Audio
+            Download Sound
           </ControlButton>
           <ControlButton variant="outline" onClick={handleCopyPayload} disabled={!generatedKeyBits}>
             Copy Quantum Key
           </ControlButton>
-          {txDone && (
-            <span className="text-sm text-green-600 font-medium">✓ Transmission completed</span>
+          {downloadDone && (
+            <span className="text-sm text-green-600 font-medium">✓ Audio file generated</span>
           )}
         </div>
         
         <StatusIndicator 
-          status={aStatus} 
-          label="Audio Transmission" 
-          progress={progress} 
+          status={downloadInProgress ? 'generating' : 'idle'} 
+          label="Audio File Generation" 
           error={aError} 
         />
-        
-        {(txInProgress || aStatus === 'playing' || aStatus === 'started') && audioData && (
-          <div className="modern-card p-4">
-            <h4 className="modern-heading modern-heading-sm mb-3">Audio Transmission</h4>
-            <AudioVisualizer 
-              isActive={txInProgress} 
-              audioData={audioData} 
-              type="waveform" 
-              height={60} 
-              color="#2563eb" 
-            />
-          </div>
-        )}
       </div>
     </div>
   );

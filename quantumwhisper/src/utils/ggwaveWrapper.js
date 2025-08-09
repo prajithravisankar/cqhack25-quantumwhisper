@@ -190,8 +190,10 @@ export async function encodeWithGGWave(data, opts = {}) {
   try {
     const { ggwave: ggwaveLib, instance } = await initGGWave();
     
-    console.log('🔊 Encoding data:', data);
-    console.log('🔊 Available protocols:', ggwaveLib.ProtocolId);
+    console.log('🔊 ENCODE DEBUG: Encoding data:', data);
+    console.log('🔊 ENCODE DEBUG: Data length:', data?.length);
+    console.log('🔊 ENCODE DEBUG: Using instance:', instance);
+    console.log('🔊 ENCODE DEBUG: Available protocols:', ggwaveLib.ProtocolId);
 
     // Convert string to payload if needed
     let payload = data;
@@ -199,15 +201,23 @@ export async function encodeWithGGWave(data, opts = {}) {
       payload = data; // GGWave can handle strings directly
     }
 
+    // Try different protocol IDs to see if one works better
+    const protocolId = ggwaveLib.ProtocolId?.GGWAVE_PROTOCOL_AUDIBLE_FAST || 
+                      ggwaveLib.ProtocolId?.GGWAVE_PROTOCOL_AUDIBLE_NORMAL || 1;
+    
+    console.log('🔊 ENCODE DEBUG: Using protocol ID:', protocolId);
+
     // Encode using the correct API pattern from examples
     const waveform = ggwaveLib.encode(
       instance, 
       payload, 
-      ggwaveLib.ProtocolId?.GGWAVE_PROTOCOL_AUDIBLE_FAST || 1, // fallback to protocol 1
+      protocolId,
       10 // volume
     );
 
-    console.log('🔊 Waveform generated:', waveform);
+    console.log('🔊 ENCODE DEBUG: Waveform generated, length:', waveform?.length);
+    console.log('🔊 ENCODE DEBUG: Waveform sample:', waveform?.slice(0, 10));
+    console.log('🔊 ENCODE DEBUG: Waveform type:', waveform?.constructor?.name);
     
     if (!waveform || waveform.length === 0) {
       throw new Error('Generated waveform is empty');
@@ -222,26 +232,243 @@ export async function encodeWithGGWave(data, opts = {}) {
 
 /**
  * Decode audio waveform using correct GGWave API
+ * Uses a callback approach to capture the result since direct decode() doesn't return properly
  */
 export function decodeWithGGWave(soundWave, opts = {}) {
-  try {
-    if (!ggwaveInitialized || !ggwave || !ggwaveInstance) {
-      // Don't spam console - this is normal during initialization
-      return null;
+  return new Promise((resolve) => {
+    try {
+      console.log('🔊 DECODE DEBUG: decodeWithGGWave() called');
+      console.log('🔊 DECODE DEBUG: soundWave type:', typeof soundWave, 'length:', soundWave?.length);
+      
+      if (!ggwaveInitialized || !ggwave || ggwaveInstance === null || ggwaveInstance === undefined) {
+        console.log('🔊 DECODE DEBUG: GGWave not ready, returning null');
+        resolve(null);
+        return;
+      }
+      
+      // Convert soundWave to Int8Array
+      let audioData = soundWave;
+      if (!(soundWave instanceof Int8Array)) {
+        console.log('🔊 DECODE DEBUG: Converting Float32 → Int8...');
+        const float32Data = new Float32Array(soundWave);
+        const int8Data = new Int8Array(float32Data.length);
+        
+        for (let i = 0; i < float32Data.length; i++) {
+          int8Data[i] = Math.round(Math.max(-128, Math.min(127, float32Data[i] * 127)));
+        }
+        
+        audioData = int8Data;
+      }
+      
+      // Debug: Check what's available for interception
+      console.log('🔊 DECODE DEBUG: Available window objects:', typeof window);
+      console.log('🔊 DECODE DEBUG: window.Module exists:', !!(window && window.Module));
+      console.log('🔊 DECODE DEBUG: window.Module.printChar exists:', !!(window && window.Module && window.Module.printChar));
+      console.log('🔊 DECODE DEBUG: ggwave object:', ggwave);
+      console.log('🔊 DECODE DEBUG: ggwave.Module exists:', !!(ggwave && ggwave.Module));
+      
+      // Intercept GGWave's internal logging to capture the decoded result
+      let decodedResult = null;
+      let originalPrintChar = null;
+      let currentMessage = '';
+      
+      // Try multiple approaches to find the printChar function
+      let printCharFound = false;
+      
+      // Approach 1: window.Module.printChar
+      if (typeof window !== 'undefined' && window.Module && window.Module.printChar) {
+        console.log('🔊 DECODE DEBUG: Found printChar in window.Module');
+        originalPrintChar = window.Module.printChar;
+        printCharFound = true;
+        
+        window.Module.printChar = function(charCode) {
+          const char = String.fromCharCode(charCode);
+          currentMessage += char;
+          
+          if (char === '\n' || char === '\r') {
+            if (currentMessage.includes('Received sound data successfully:')) {
+              const match = currentMessage.match(/Received sound data successfully: '([^']+)'/);
+              if (match && match[1]) {
+                decodedResult = match[1];
+                console.log('🔊 DECODE DEBUG: ✅ Captured from window.Module.printChar:', decodedResult);
+              }
+            }
+            currentMessage = '';
+          }
+          
+          if (originalPrintChar) {
+            originalPrintChar(charCode);
+          }
+        };
+      }
+      
+      // Approach 2: ggwave.Module.printChar
+      if (!printCharFound && ggwave && ggwave.Module && ggwave.Module.printChar) {
+        console.log('🔊 DECODE DEBUG: Found printChar in ggwave.Module');
+        originalPrintChar = ggwave.Module.printChar;
+        printCharFound = true;
+        
+        ggwave.Module.printChar = function(charCode) {
+          const char = String.fromCharCode(charCode);
+          currentMessage += char;
+          
+          if (char === '\n' || char === '\r') {
+            if (currentMessage.includes('Received sound data successfully:')) {
+              const match = currentMessage.match(/Received sound data successfully: '([^']+)'/);
+              if (match && match[1]) {
+                decodedResult = match[1];
+                console.log('🔊 DECODE DEBUG: ✅ Captured from ggwave.Module.printChar:', decodedResult);
+              }
+            }
+            currentMessage = '';
+          }
+          
+          if (originalPrintChar) {
+            originalPrintChar(charCode);
+          }
+        };
+      }
+      
+      // Approach 3: Hook into the browser's console directly
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      const originalInfo = console.info;
+      
+      if (!printCharFound) {
+        console.log('🔊 DECODE DEBUG: printChar not found, using console hook approach');
+        
+        // Monitor all console outputs
+        console.log = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('Received sound data successfully:')) {
+            const match = message.match(/Received sound data successfully: '([^']+)'/);
+            if (match && match[1]) {
+              decodedResult = match[1];
+              console.log('🔊 DECODE DEBUG: ✅ Captured from console.log:', decodedResult);
+            }
+          }
+          originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('Received sound data successfully:')) {
+            const match = message.match(/Received sound data successfully: '([^']+)'/);
+            if (match && match[1]) {
+              decodedResult = match[1];
+              originalLog('🔊 DECODE DEBUG: ✅ Captured from console.error:', decodedResult);
+            }
+          }
+          originalError.apply(console, args);
+        };
+      }
+      
+      console.log('🔊 DECODE DEBUG: printChar found:', printCharFound);
+      
+      try {
+        console.log('🔊 DECODE DEBUG: Starting decode with log interception...');
+        
+        // Since printChar is not accessible, let's try a different approach
+        // The success message does appear in browser logs, so let's try to access the DOM console
+        
+        const result = ggwave.decode(ggwaveInstance, audioData);
+        
+        // Immediate check
+        if (result && result.length > 0) {
+          console.log('🔊 DECODE DEBUG: Direct result has data:', result);
+          try {
+            const resultString = new TextDecoder().decode(result);
+            if (resultString && resultString.length > 0) {
+              decodedResult = resultString;
+              console.log('🔊 DECODE DEBUG: ✅ Direct decode successful:', decodedResult);
+            }
+          } catch (e) {
+            console.log('🔊 DECODE DEBUG: Direct decode failed:', e);
+          }
+        }
+        
+        // Wait a bit for async logging
+        setTimeout(() => {
+          // Restore all intercepted functions
+          if (printCharFound) {
+            if (window && window.Module && originalPrintChar) {
+              window.Module.printChar = originalPrintChar;
+            }
+            if (ggwave && ggwave.Module && originalPrintChar) {
+              ggwave.Module.printChar = originalPrintChar;
+            }
+          } else {
+            // Restore console functions
+            console.log = originalLog;
+            console.error = originalError;
+            console.warn = originalWarn;
+            console.info = originalInfo;
+          }
+          
+          if (decodedResult) {
+            console.log('🔊 DECODE DEBUG: ✅ Successfully captured decoded result:', decodedResult);
+            resolve(decodedResult);
+          } else {
+            console.log('🔊 DECODE DEBUG: ❌ No result captured from logs');
+            console.log('🔊 DECODE DEBUG: Since GGWave decode is working internally, providing manual fallback...');
+            
+            // Manual extraction - we know the decode is successful from logs
+            // This is a temporary workaround until we find the proper API
+            
+            // First, let's try to extract from console history if possible
+            let foundInConsole = false;
+            try {
+              // Check if we can access recent console logs
+              const consoleHistory = window.console.history || [];
+              const recentLogs = consoleHistory.slice(-20); // Check last 20 logs
+              
+              for (const log of recentLogs) {
+                if (typeof log === 'string' && log.includes('Received sound data successfully:')) {
+                  const match = log.match(/Received sound data successfully: '([^']+)'/);
+                  if (match && match[1]) {
+                    decodedResult = match[1];
+                    foundInConsole = true;
+                    console.log('🔊 DECODE DEBUG: ✅ Found result in console history:', decodedResult);
+                    break;
+                  }
+                }
+              }
+            } catch (e) {
+              console.log('🔊 DECODE DEBUG: Cannot access console history:', e);
+            }
+            
+            if (foundInConsole) {
+              resolve(decodedResult);
+            } else {
+              // Instead of showing a popup, return a special value indicating manual input is needed
+              console.log('');
+              console.log('🎯 MANUAL STEP REQUIRED:');
+              console.log('1. Look for a line above that says: "Received sound data successfully: \'...\'"');
+              console.log('2. Copy ONLY the text between the single quotes (the long string starting with ey...)');
+              console.log('3. The UI will provide a text input field for you to paste it');
+              console.log('');
+              
+              // Return a special indicator that manual input is needed
+              resolve('MANUAL_INPUT_REQUIRED');
+            }
+          }
+        }, 200); // Increased timeout
+        
+      } catch (error) {
+        console.log = originalLog;
+        if (originalPrintChar && window.Module) {
+          window.Module.printChar = originalPrintChar;
+        }
+        console.error('🔊 DECODE DEBUG: Error during decode:', error);
+        resolve(null);
+      }
+      
+    } catch (err) {
+      console.error('🔊 DECODE DEBUG: Failed to decode audio:', err);
+      resolve(null);
     }
-    
-    // Convert soundWave to appropriate format for decode
-    let audioData = soundWave;
-    if (!(soundWave instanceof Int8Array)) {
-      audioData = convertTypedArray(new Float32Array(soundWave), Int8Array);
-    }
-    
-    const result = ggwave.decode(ggwaveInstance, audioData);
-    return result;
-  } catch (err) {
-    console.error('❌ Failed to decode audio:', err);
-    return null;
-  }
+  });
 }
 
 // Convert quantum key bits to a transmittable string (base64 JSON)
@@ -289,11 +516,23 @@ export async function transmitQuantumKey(bitsArray, {
 // Reception: microphone -> streaming decode via GGWave
 export async function receiveQuantumKey({
   onStatus,
+  onDecoded, // New callback for when data is decoded
   ggwaveOptions = {},
   timeoutMs = 15000,
   minRms = 0.01,
 } = {}) {
-  const notify = (s, extra) => onStatus && onStatus({ status: s, ...extra });
+  console.log('🔊 GGWAVE DEBUG: receiveQuantumKey() called with params:', {
+    hasOnStatus: !!onStatus,
+    hasOnDecoded: !!onDecoded,
+    timeoutMs,
+    minRms
+  });
+  
+  const notify = (s, extra) => {
+    console.log('🔊 GGWAVE DEBUG: Notifying status:', s, extra);
+    onStatus && onStatus({ status: s, ...extra });
+  };
+  
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if (!AudioCtx) throw new Error('Web Audio API not supported');
 
@@ -306,6 +545,7 @@ export async function receiveQuantumKey({
   let resolved = false;
 
   const stopAll = () => {
+    console.log('🔊 GGWAVE DEBUG: stopAll() called');
     try { rafId && cancelAnimationFrame(rafId); } catch {}
     try { analyser && analyser.disconnect(); } catch {}
     try { source && source.disconnect(); } catch {}
@@ -314,14 +554,18 @@ export async function receiveQuantumKey({
   };
 
   try {
+    console.log('🔊 GGWAVE DEBUG: Requesting microphone permission...');
     notify('request-permission');
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log('🔊 GGWAVE DEBUG: Microphone permission granted, stream:', stream);
   } catch (err) {
+    console.error('🔊 GGWAVE DEBUG: Microphone permission denied:', err);
     notify('permission-denied', { error: err?.message });
     throw new Error('Microphone permission denied');
   }
 
   try {
+    console.log('🔊 GGWAVE DEBUG: Setting up audio context and analyser...');
     ctx = new AudioCtx();
     source = ctx.createMediaStreamSource(stream);
     analyser = ctx.createAnalyser();
@@ -332,11 +576,15 @@ export async function receiveQuantumKey({
     source.connect(analyser);
 
     // Initialize GGWave for decoding
+    console.log('🔊 GGWAVE DEBUG: Initializing GGWave...');
     await initGGWave();
+    console.log('🔊 GGWAVE DEBUG: GGWave initialized successfully');
+    
     const startedAt = Date.now();
 
     const loop = () => {
       if (Date.now() - startedAt > timeoutMs) {
+        console.log('🔊 GGWAVE DEBUG: Timeout reached, stopping...');
         notify('timeout');
         stopAll();
         if (!resolved) resolved = true;
@@ -349,22 +597,54 @@ export async function receiveQuantumKey({
       let sum = 0;
       for (let i = 0; i < dataArray.length; i++) sum += dataArray[i] * dataArray[i];
       const rms = Math.sqrt(sum / dataArray.length);
+      
+      // Only log RMS every 100th frame to avoid spam
+      if (Math.random() < 0.01) {
+        console.log('🔊 GGWAVE DEBUG: Current RMS level:', rms.toFixed(4), 'threshold:', minRms);
+      }
+      
       notify('audio-level', { rms });
 
       if (rms >= minRms) {
+        console.log('🔊 GGWAVE DEBUG: RMS threshold exceeded, attempting decode...');
         try {
           const decoded = decodeWithGGWave(dataArray, ggwaveOptions);
+          console.log('🔊 GGWAVE DEBUG: Decode attempt result:', decoded);
+          
           if (decoded && typeof decoded === 'string' && decoded.length > 0) {
+            console.log('🔊 GGWAVE DEBUG: Valid decoded string found:', decoded);
             notify('decoded', { raw: decoded });
+            
             const unpacked = unpackQuantumKeyPayload(decoded);
-            if (unpacked && Array.isArray(unpacked.bits) && unpacked.bits.length >= 16) {
-              notify('success', { length: unpacked.bits.length });
+            console.log('🔊 GGWAVE DEBUG: Unpacking result:', unpacked);
+            
+            if (unpacked && Array.isArray(unpacked.bits) && unpacked.bits.length >= 8) {
+              console.log('🔊 GGWAVE DEBUG: Valid quantum key payload found!', {
+                bits: unpacked.bits.length,
+                data: unpacked
+              });
+              
+              notify('success', { length: unpacked.bits.length, data: unpacked });
+              
+              // Call the onDecoded callback with the actual data
+              if (onDecoded) {
+                console.log('🔊 GGWAVE DEBUG: Calling onDecoded callback...');
+                onDecoded(decoded, unpacked);
+              } else {
+                console.log('🔊 GGWAVE DEBUG: No onDecoded callback provided');
+              }
+              
               stopAll();
               if (!resolved) resolved = true;
               return;
+            } else {
+              console.log('🔊 GGWAVE DEBUG: Unpacked data invalid or too short:', unpacked);
             }
+          } else {
+            console.log('🔊 GGWAVE DEBUG: Decode result invalid:', typeof decoded, decoded?.length);
           }
         } catch (err) {
+          console.error('🔊 GGWAVE DEBUG: Decode error:', err);
           notify('decode-error', { error: err?.message });
         }
       }
@@ -372,17 +652,20 @@ export async function receiveQuantumKey({
       rafId = requestAnimationFrame(loop);
     };
 
+    console.log('🔊 GGWAVE DEBUG: Starting audio listening loop...');
     notify('listening');
     loop();
 
     // Return a handle with a promise-like stop mechanism
     return {
       stop: () => {
+        console.log('🔊 GGWAVE DEBUG: Stop method called');
         notify('stopped');
         stopAll();
       },
     };
   } catch (err) {
+    console.error('🔊 GGWAVE DEBUG: Error in receiveQuantumKey setup:', err);
     stopAll();
     notify('error', { error: err?.message });
     throw err;
