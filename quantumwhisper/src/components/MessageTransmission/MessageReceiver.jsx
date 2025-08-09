@@ -141,10 +141,10 @@ const MessageReceiver = () => {
   };
 
   return (
-    <div className="modern-card p-6 space-y-6">
+    <div className="modern-card p-6 space-y-6 text-center">
       {/* Copy/Paste Information Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center justify-center gap-2 mb-2">
           <div className="text-blue-600">📥</div>
           <h3 className="text-sm font-semibold text-blue-800">Copy/Paste Message Exchange</h3>
         </div>
@@ -158,12 +158,12 @@ const MessageReceiver = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-center mb-6">
         <div>
           <h2 className="modern-heading modern-heading-lg">Secure Message Receiver</h2>
           <p className="modern-text-secondary text-sm mt-1">Quantum-encrypted message decryption</p>
         </div>
-        <ControlButton variant="secondary" onClick={handleClearMessages}>
+        <ControlButton variant="secondary" onClick={() => setMessages([])}>
           Clear History
         </ControlButton>
       </div>

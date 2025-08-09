@@ -290,6 +290,7 @@ export function decodeWithGGWave(soundWave, opts = {}) {
               const match = currentMessage.match(/Received sound data successfully: '([^']+)'/);
               if (match && match[1]) {
                 decodedResult = match[1];
+                window.lastGGWaveResult = decodedResult; // Store globally as backup
                 console.log('🔊 DECODE DEBUG: ✅ Captured from window.Module.printChar:', decodedResult);
               }
             }
@@ -317,6 +318,7 @@ export function decodeWithGGWave(soundWave, opts = {}) {
               const match = currentMessage.match(/Received sound data successfully: '([^']+)'/);
               if (match && match[1]) {
                 decodedResult = match[1];
+                window.lastGGWaveResult = decodedResult; // Store globally as backup
                 console.log('🔊 DECODE DEBUG: ✅ Captured from ggwave.Module.printChar:', decodedResult);
               }
             }
@@ -369,10 +371,36 @@ export function decodeWithGGWave(soundWave, opts = {}) {
       try {
         console.log('🔊 DECODE DEBUG: Starting decode with log interception...');
         
+        // Intercept console.log to catch the "Received sound data successfully" message
+        const originalConsoleLog = console.log;
+        let capturedResult = null;
+        
+        console.log = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('Received sound data successfully:')) {
+            const match = message.match(/Received sound data successfully: '([^']+)'/);
+            if (match && match[1]) {
+              capturedResult = match[1];
+              window.lastGGWaveResult = capturedResult;
+              originalConsoleLog('🔊 DECODE DEBUG: ✅ Captured from console.log interception:', capturedResult);
+            }
+          }
+          return originalConsoleLog.apply(console, args);
+        };
+        
         // Since printChar is not accessible, let's try a different approach
         // The success message does appear in browser logs, so let's try to access the DOM console
         
         const result = ggwave.decode(ggwaveInstance, audioData);
+        
+        // Restore console.log
+        console.log = originalConsoleLog;
+        
+        // Check if we captured the result
+        if (capturedResult) {
+          console.log('🔊 DECODE DEBUG: ✅ Using captured result from console interception:', capturedResult);
+          decodedResult = capturedResult;
+        }
         
         // Immediate check
         if (result && result.length > 0) {
@@ -417,6 +445,22 @@ export function decodeWithGGWave(soundWave, opts = {}) {
             // This is a temporary workaround until we find the proper API
             
             // First, let's try to extract from console history if possible
+            console.log('🔊 DECODE DEBUG: Starting final check, decodedResult =', decodedResult);
+            
+            // First priority: check if we have decodedResult from any capture method
+            if (decodedResult) {
+              console.log('🔊 DECODE DEBUG: ✅ Using captured result:', decodedResult);
+              resolve(decodedResult);
+              return;
+            }
+            
+            // Second priority: check global backup
+            if (window.lastGGWaveResult) {
+              console.log('🔊 DECODE DEBUG: ✅ Found in window.lastGGWaveResult:', window.lastGGWaveResult);
+              resolve(window.lastGGWaveResult);
+              return;
+            }
+            
             let foundInConsole = false;
             try {
               // Check if we can access recent console logs
@@ -440,7 +484,52 @@ export function decodeWithGGWave(soundWave, opts = {}) {
             
             if (foundInConsole) {
               resolve(decodedResult);
+            } else if (decodedResult) {
+              // We already captured the result from printChar, use it!
+              console.log('🔊 DECODE DEBUG: ✅ Using previously captured result:', decodedResult);
+              resolve(decodedResult);
             } else {
+              // Try one more aggressive approach - scan the console output directly
+              console.log('🔊 DECODE DEBUG: Trying aggressive console scan...');
+              
+              // Check for any recent "Received sound data successfully" in the console output
+              try {
+                // Look at recent console entries by checking the DOM
+                const consoleElements = document.querySelectorAll('.console-message, .console-log-level-log');
+                let foundResult = null;
+                
+                for (const element of consoleElements) {
+                  const text = element.textContent || element.innerText || '';
+                  if (text.includes('Received sound data successfully:')) {
+                    const match = text.match(/Received sound data successfully: '([^']+)'/);
+                    if (match && match[1]) {
+                      foundResult = match[1];
+                      console.log('🔊 DECODE DEBUG: ✅ Found in DOM console:', foundResult);
+                      break;
+                    }
+                  }
+                }
+                
+                if (foundResult) {
+                  resolve(foundResult);
+                  return;
+                }
+              } catch (e) {
+                console.log('🔊 DECODE DEBUG: DOM console scan failed:', e);
+              }
+              
+              // Check if console.log was intercepted and has the data
+              try {
+                if (window.lastGGWaveResult) {
+                  console.log('🔊 DECODE DEBUG: ✅ Found in window.lastGGWaveResult:', window.lastGGWaveResult);
+                  resolve(window.lastGGWaveResult);
+                  return;
+                }
+              } catch (e) {
+                console.log('🔊 DECODE DEBUG: window.lastGGWaveResult check failed:', e);
+              }
+              
+              console.log('🔊 DECODE DEBUG: ❌ All automated methods failed, falling back to manual input');
               // Instead of showing a popup, return a special value indicating manual input is needed
               console.log('');
               console.log('🎯 MANUAL STEP REQUIRED:');
@@ -453,7 +542,7 @@ export function decodeWithGGWave(soundWave, opts = {}) {
               resolve('MANUAL_INPUT_REQUIRED');
             }
           }
-        }, 200); // Increased timeout
+        }, 1000); // Increased timeout to 1 second
         
       } catch (error) {
         console.log = originalLog;
