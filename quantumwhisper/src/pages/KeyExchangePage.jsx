@@ -15,15 +15,7 @@ const KeyExchangePage = () => {
           <h1 className="quantum-heading-xl mb-6">
             🔮 Quantum Key Exchange 🔮
           </h1>
-          <p className="quantum-text text-lg mb-8 max-w-3xl mx-auto leading-relaxed">
-            Channel the mystical forces of quantum mechanics to create unbreakable cryptographic bonds. 
-            Use the ancient BB84 ritual to establish your quantum connection.
-          </p>
           <div className="quantum-card-orange p-6 max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="text-orange-500">🎯</div>
-              <h3 className="quantum-heading-sm">How the Dark Ritual Works</h3>
-            </div>
             <div className="grid md:grid-cols-2 gap-6 text-sm quantum-text-muted">
               <div>
                 <strong className="text-orange-400">Alice (Key Generator):</strong>
@@ -56,28 +48,38 @@ const KeyExchangePage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="grid gap-12 lg:grid-cols-2 mb-16">
-          <div className="quantum-card p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="text-3xl">🔐</div>
-              <h2 className="quantum-heading-lg">Alice's Chamber</h2>
+        <div style={{display: 'flex', flexDirection: 'row', gap: '3rem', marginBottom: '4rem', maxWidth: '95rem', margin: '0 auto'}}>
+          <div className="quantum-card" style={{flex: '1', minWidth: '0', padding: '3rem'}}>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="text-3xl">1️⃣</div>
+              <h2 className="quantum-heading-lg">Step 1</h2>
             </div>
-            <p className="quantum-text-muted text-sm mb-8 leading-relaxed">
-              The generator of quantum mysteries. Create and enchant your cryptographic keys here.
+            <p className="text-white text-sm mb-10 leading-relaxed">
+              Generate quantum cryptographic keys using the BB84 protocol. Create secure key pairs for encrypted communication.
             </p>
             <KeyGenerator />
           </div>
 
-          <div className="quantum-card p-8">
+          <div className="quantum-card" style={{flex: '1', minWidth: '0', padding: '3rem'}}>
             <div className="flex items-center gap-3 mb-6">
-              <div className="text-3xl">�</div>
-              <h2 className="quantum-heading-lg">Bob's Lair</h2>
+              <div className="text-3xl">2️⃣</div>';
+              <h2 className="quantum-heading-lg">Step 2</h2>
             </div>
-            <p className="quantum-text-muted text-sm mb-8 leading-relaxed">
-              The receiver of quantum secrets. Decode Alice's mystical transmissions here.
+            <p className="text-white text-sm mb-8 leading-relaxed">
+              Receive and process quantum keys from Alice. Import audio files to establish secure communication channels.
             </p>
             <KeyReceiver />
           </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex justify-center mb-12">
+          <Link 
+            to="/messaging" 
+            className="quantum-button-outline"
+          >
+            � Continue to Encrypted Messaging →
+          </Link>
         </div>
 
         {/* Status Footer */}

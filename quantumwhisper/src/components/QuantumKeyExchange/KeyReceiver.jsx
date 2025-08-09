@@ -243,8 +243,8 @@ No popup will block your access to the Developer Console.`);
   return (
     <div className="modern-card p-6 space-y-6">
       {/* File Workflow Information Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-center">
+        <div className="flex items-center gap-2 mb-2 justify-center">
           <div className="text-blue-600">📁</div>
           <h3 className="text-sm font-semibold text-blue-800">File-Based Quantum Key Exchange</h3>
         </div>
@@ -253,16 +253,13 @@ No popup will block your access to the Developer Console.`);
         </p>
         <div className="text-xs text-blue-600 space-y-1">
           <div>• Select "Upload Sound" and choose the .wav file from Alice</div>
+          <div>• <strong>OR</strong> Click "Paste Payload" to manually input a copied quantum key</div>
           <div>• The system will automatically decode the quantum key from the audio</div>
           <div>• If needed, a manual input field will appear on this page (no blocking popups!)</div>
         </div>
       </div>
 
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="modern-heading modern-heading-lg">Quantum Key Receiver</h2>
-          <p className="modern-text-secondary text-sm mt-1">Bob's Station</p>
-        </div>
         <div className="flex items-center gap-3">
           <ControlButton onClick={handleUploadSound} disabled={!canUpload} loading={uploading}>
             Upload Sound
