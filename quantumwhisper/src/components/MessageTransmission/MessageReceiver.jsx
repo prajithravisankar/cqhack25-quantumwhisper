@@ -4,7 +4,6 @@ import ControlButton from '@/components/Common/ControlButton';
 import StatusIndicator from '@/components/Common/StatusIndicator';
 import QuantumContext from '@/context/QuantumContext';
 import useEncryption from '@/hooks/useEncryption';
-import useAudioProcessor from '@/hooks/useAudioProcessor';
 
 function clsx(...arr) {
   return arr.filter(Boolean).join(' ');
@@ -13,48 +12,46 @@ function clsx(...arr) {
 const MessageReceiver = () => {
   const { receivedKeyBits, status: qStatus } = useContext(QuantumContext);
   const { decrypt, status: decStatus, error: decError, isKeyValid } = useEncryption(receivedKeyBits);
-  const { 
-    receiveQuantumKey: startListening, 
-    stopReception,
-    parseTransmittedQuantumKey,
-    status: audioStatus, 
-    progress: audioProgress, 
-    error: audioError 
-  } = useAudioProcessor();
 
-  const [listening, setListening] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState('');
+  const [pasteInput, setPasteInput] = useState('');
   const [decrypting, setDecrypting] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState('');
 
-  const canListen = !listening && audioStatus !== 'listening';
+  const canPaste = pasteInput.trim().length > 0 && !decrypting;
 
-  const handleListen = async () => {
-    setListening(true);
-    const handleRes = await startListening({ timeoutMs: 30000 });
-    if (!handleRes.ok) {
-      setListening(false);
-      return;
-    }
-    // For demo, we'll use paste functionality since live audio decoding is complex
-  };
-
-  const handleStop = () => {
-    stopReception();
-    setListening(false);
-  };
-
-  const handlePasteMessage = async () => {
+  const handlePasteFromClipboard = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      console.log('Pasted message text:', text);
+      console.log('Pasted message text from clipboard:', text);
       await processReceivedData(text.trim());
+      setPasteInput(''); // Clear input after successful processing
     } catch (e) {
-      console.error('Failed to paste message:', e);
+      console.error('Failed to paste message from clipboard:', e);
       const errorMessage = {
         id: Date.now(),
         timestamp: new Date().toLocaleTimeString(),
-        content: '[Paste failed]',
+        content: '[Clipboard paste failed]',
+        status: 'error',
+        error: e.message
+      };
+      setMessages(prev => [errorMessage, ...prev]);
+    }
+  };
+
+  const handlePasteFromInput = async () => {
+    if (!pasteInput.trim()) return;
+    
+    try {
+      console.log('Processing pasted text from input:', pasteInput);
+      await processReceivedData(pasteInput.trim());
+      setPasteInput(''); // Clear input after successful processing
+    } catch (e) {
+      console.error('Failed to process pasted message:', e);
+      const errorMessage = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleTimeString(),
+        content: '[Input processing failed]',
         status: 'error',
         error: e.message
       };
@@ -135,6 +132,7 @@ const MessageReceiver = () => {
   const handleClearMessages = () => {
     setMessages([]);
     setCurrentMessage('');
+    setPasteInput('');
   };
 
   const getKeyStatus = () => {
@@ -144,6 +142,22 @@ const MessageReceiver = () => {
 
   return (
     <div className="modern-card p-6 space-y-6">
+      {/* Copy/Paste Information Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="text-blue-600">📥</div>
+          <h3 className="text-sm font-semibold text-blue-800">Copy/Paste Message Exchange</h3>
+        </div>
+        <p className="text-sm text-blue-700 mb-2">
+          Paste encrypted messages to decrypt them with your quantum key.
+        </p>
+        <div className="text-xs text-blue-600 space-y-1">
+          <div>• Paste encrypted message text in the field below</div>
+          <div>• Click "Decrypt Message" to reveal the original text</div>
+          <div>• Both parties must have matching quantum keys for successful decryption</div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="modern-heading modern-heading-lg">Secure Message Receiver</h2>
@@ -170,38 +184,36 @@ const MessageReceiver = () => {
         </div>
       </div>
 
-      {/* Reception Controls */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 flex-wrap">
+      {/* Message Input */}
+      <div className="space-y-3">
+        <label htmlFor="pasteInput" className="block modern-heading modern-heading-sm">
+          Encrypted message to decrypt
+        </label>
+        <textarea
+          id="pasteInput"
+          rows={4}
+          value={pasteInput}
+          onChange={(e) => setPasteInput(e.target.value)}
+          className="modern-input resize-none"
+          placeholder="Paste encrypted message here..."
+          disabled={!isKeyValid}
+        />
+        <div className="flex items-center gap-3">
           <ControlButton 
-            onClick={handleListen} 
-            disabled={!canListen || !isKeyValid}
-            loading={listening}
+            onClick={handlePasteFromInput}
+            disabled={!canPaste || !isKeyValid}
+            loading={decrypting}
           >
-            Listen for Message
-          </ControlButton>
-          <ControlButton 
-            variant="secondary" 
-            onClick={handleStop} 
-            disabled={!listening}
-          >
-            Stop
+            Decrypt Message
           </ControlButton>
           <ControlButton 
             variant="outline" 
-            onClick={handlePasteMessage}
-            disabled={!isKeyValid}
+            onClick={handlePasteFromClipboard}
+            disabled={!isKeyValid || decrypting}
           >
-            Paste Message
+            Paste from Clipboard
           </ControlButton>
         </div>
-        
-        <StatusIndicator 
-          status={audioStatus} 
-          label="Audio Reception" 
-          progress={audioProgress} 
-          error={audioError} 
-        />
       </div>
 
       {/* Decryption Status */}
@@ -255,7 +267,7 @@ const MessageReceiver = () => {
         <div className="text-center py-12">
           <div className="modern-text-secondary text-lg mb-2">No messages received yet</div>
           <div className="modern-text-muted text-sm">
-            Generate a quantum key and listen for encrypted messages to begin secure communication
+            Paste encrypted messages above to decrypt them with your quantum key
           </div>
         </div>
       )}
